@@ -1,152 +1,99 @@
-Build Manager
-==============
-
-Overview
----------
-
-  Build Manager provides a wrapper around Drush's make command. Its purpose is
-  to make it easy for site maintainers to manage builds, for custom sites and
-  Drupal distros.
-
-[[ Outline ]]
-
- Config includes:
- - prebuild-commands
- - postbuild-commands
- - build properties
-
-[[ Developers ]]
-
- Other extensions can implement the following hooks in their my-project.drush.inc
- files:
-   - hook_buildmanager_build($make_info, $build_config, $commands), obj $commands
-   - hook_buildmanager_build_options(), returns addtional options to include in
-     buildmanager-build
-   - hook_buildmanager_configure($config), returns altered $config
- 
- Implementers can support arbitrary config in $build_config and adjust commands
- accordingly.
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 Drush Subtree
 =============
 
 Overview
 --------
 
-  Drush Subtree provides a wrapper around git-subtree and integration with
-  Drush's Build Manager extension. Its purpose is to reduce friction for
-  contributors.
-   
+Drush Subtree's goal is to reduce friction for Drupal developers who want to
+make their work reusable. It provides a wrapper around git-subtree to simplify
+management of Git repos inside a parent repo and it provides integration with
+Drush's Build Manager extension. This enables you to:
 
-  Drush Subtree makes it easier to maintain an instance of a distro by:
+  - Use Build Manager's interactive prompt to set your site up with Git subtrees
+    for projects you maintain outsite the parent site repository.
 
-    - Putting all your contrib and custom projects into a build.make file. This
-      way any patches you maintain can be easily documented and applied by drush
-      make. 
+  - Do development inside whatever site repo you're actively working in,
+    then push commits out of your site repo up to drupal.org or (whatever
+    private repo your custom module or theme lives in).
 
-    - Storing any custom shell commands in a simple config file (see
-      drushsubtree.example.yml) to automate and standardize your site re-build
-      process. This makes updating to the next release as simple as running
-      `drush make`.
+  - Pull updates into your site repo from an outside repo for your
+    distro, module, theme, or custom project.
 
-  Drush Subtree reduces friction for contributors by storing contrib and custom
-  projects you (or your team) maintain in git subtrees. This enables you to:
+  - For teams working together on a site repository, this enables team
+    members to contribute to a project inside a site repo, through your own private
+    workflow. Then it enables you--the maintainer--to easily push that work out to public
+    repos when it's ready to be released.
 
-    - Do development inside whatever site repo you're actively working in,
-      then push commits out of your site repo up to drupal.org or whatever
-      private repo your custom module may live in.
+  - Incorporate Git subtrees into Drush Make builds for your site repository.
+    (Provides support for checkouting out tagged versions of projects, no commit
+    ID required.)
 
-    - Pull updates into your site repo from an outside repo for your contrib
-      distro, module, theme, or custom project. 
-
-    - (For large teams) Enables people to contribute to your contrib project
-      with internal work on a site repo, then lets you easily push that work out
-      to public repos when it's ready to be released.
 
 Dependencies
 ------------
 
-  - Drush master branch (until --no-recurse and autoloading are committed to
-    6.x), requires composer install.
-
-  - Git subtree
+  - [git-subtree](https://github.com/git/git/tree/master/contrib/subtree)
+  - [Build Manager](https://github.com/whitehouse/buildmanager) - Note: even if you
+    don't use Build Manager to manager Drush Make builds, Drush Subtree expects
+    you to store info about your subtrees in a Build Manager configuration file.
+  - (Recommended) Drush master / 7.x (Build Manager uses the Drush Make
+    --no-recurse flag and autoloading which--as of the time of this writing--
+    ave not been backported to 6.x)
 
 Usage
 -----
 
-  1. Set up a build.make file at the top-level of your repository. Drush make
-     will use this to set up your site. (NOTE: You can include other make files in you
-     your build.make, and included make files can include other make files. But
-     when drush make runs with the --no-recursion flag. If your make file
-     downloads a project with its own make file, drush make will NOT
-     automatically build the stuff specified by that make file.)
+Store info about your site repository's subtrees in a Build Manager
+configuration file. Use the interactive prompt to have Build Manager generate
+this file for you, or see examples
+[here](https://github.com/whitehouse/buildmanager) to create the file manually.
 
-     If your build.make includes a makefile from a git subtree, add it to your
-     repo like this:
+Start the interactive prompt like this:
 
-       git subtree add --prefix=projects/example --squash --message="Added tweetserver subtree. From https://github.com/example/example.git" https://github.com/example/example.git 7.x-1.x
-       
+    drush buildmanager-configure
 
-  2. Set up config for your own site build in drushsubtree.example.yml. This
-     includes (see drushsubtree.example.yml): 
-     
-       - which build file to use (e.g. build.make)
-       - where to build the site (e.g. docroot)
-       - what projects to replace with git subtrees
-       - any commands you want to run after the site is rebuilt
+If you're already familiar with git-subtree, see documentation and examples for
+the `subtree` command. This interface is the same as git subtree's with a few
+simplifications (it grabs parameters from your Build Manager config, so you
+don't have to type those parameters in over and over or worry about possible
+human error). For more details and examples, see:
 
+    drush subtree --help
 
-  3. Do this:
-      
-        cd /path/to/my-site-repo
-        drush drushsubtree-build --message="Update example distro to 7.x-1.3 with drush subtree" -v
-          
-          or use aliases
+If you're not familiar with git-subtree, you may prefer the more Drush-y
+interface, `drush subtree-<verb> <args>`, see:
 
-        drush subtree-build --message="Update example distro to 7.x-1.3 with drush subtree" -v
-        drush dsb --message="Update example distro to 7.x-1.3 with drush subtree" -v
+  drush --filter=drushsubtree
 
-        # If you have multiple config files, you can skip the prompt and specify
-        # which config to use like this:
-        drush subtree ./drushsubtree.mysite.yml --message="Update example distro to 7.x-1.3 with drush subtree" -v
+Here's a quick overview of the main commands:
 
-     Helpful additional options provided by Drush:
+    # Note: All the commands below are pushing to or pulling from a remote
+    # repository specified in your Build Manager config file.
 
-        # Use --debug to see more info about what drush is doing under the hood.
-        drush dsb -v --message="Update example distro to 7.x-1.3 with drush subtree"
-        drush dsb -v --debug --message="Update example distro to 7.x-1.3 with drush subtree"
- 
-        # Use --simulate to see the commands drush will execute when you run
-        # site make (without actually running it).
-        drush dsb --message="Update example distro to 7.x-1.3 with drush subtree" --simulate
+    # Add a subtree to the parent repository.
+    drush subtree add <project>                
 
+    # Pull updates in from outside your site repo.
+    drush subtree pull <project>               
 
-Tips for including multiple make files in your build file
-----------------------------------------------------------
+    # Push updates out to external repo from inside your site repo.
+    drush subtree push <project>               
 
-  If you're including multiple make files, all properties need keys. For example...
+    # "Checkout" a tagged version of a subtree project (e.g. 7.x-2.1) inside your
+    # site repository. Note: This is a faux subtree command. (It only exists via
+    # Drush Subtree, there is no `git subtree checkout` command.)
+    drush subtree checkout <project> <tag>
 
-  This is bad:
+    # Specify a particular commit ID to use or "checkout" for a subtree project.
+    drush subtree merge <project> <id>
 
-     example1.make has this line: includes[] = exampleA.make
-     example2.make has this line: includes[] = exampleB.make
+Tips for getting started:
 
-  This is good:
-
-     example1.make has this line: includes[a] = exampleA.make
-     example2.make has this line: includes[b] = exampleB.make
-
-  And this is good:
-
-     build-example.make has this line:  includes[base] = path/to/base.make
-     base.make has this line:           includes[core] = drupal-org-core.make
-     base.make also has this line:      includes[contrib] = drupal-org.make
-
-TODO
------
-Currently subtree turns off recursion and expects all make files to be
-included in a master build.make. It could be possible to get rid of this, but
-this could create confusion and complexity. Revisit this.
-
+  - To see what's going on with git under the hood, use Drush's verbose flag `-v`
+  - To examine shell commands generated by Drush Subtree without running them,
+    use Drush's `--simulate` flag.
+  - Don't include changes to multiple projects (i.e. two different modules) all
+    in the same commit. For a project stored in a subtree, this enables you to push
+    changes out cleanly. For projects that are NOT stored in a subtree, this
+    will make it easy for you to break custom projects out of your site repo and
+    make them stand-alone projects later, without losing your commit history.
