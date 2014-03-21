@@ -52,6 +52,11 @@ Start the interactive prompt like this:
 
     drush buildmanager-configure
 
+Next you can manually add/update subtrees with the commands described below, or via automated
+Build Manger builds. (See [Build Manger integration](#build-manager-integration)
+for information on how Drush Subtree works with automateds builds managed
+by Drush Make and Build Manager.)
+
 If you're already familiar with git-subtree, see documentation and examples for
 the `subtree` command. This interface is the same as git subtree's with a few
 simplifications (it grabs parameters from your Build Manager config, so you
@@ -97,3 +102,51 @@ Tips for getting started:
     changes out cleanly. For projects that are NOT stored in a subtree, this
     will make it easy for you to break custom projects out of your site repo and
     make them stand-alone projects later, without losing your commit history.
+ 
+
+Build Manager integration
+-------------------------
+
+Drush Subtree integrates with Build Manager to provide a few niceties:
+
+  - Hooks into the `drush buildmanager-configure` interactive prompt to help you
+    set up and manage subtrees
+  - Hooks into `drush buildmanager-build` to figure out which projects
+    referenced in your make file(s) are subtrees and manage them accordingly
+    during your automated (re)builds
+
+There are a few things you should know about how this works:
+
+**Re. Drush Make**: Follow the tips for setting up your build.make file included
+in the Build Manager documentation
+[here](https://github.com/whitehouse/buildmanager#tips-for-working-with-make-files).
+Drush Subtree assumes you are using the `--no-recurse` flag with your builds. If
+you do NOT use `--no-recurse` Drush Subtree will not be able to detect subtrees
+and versions included make files that are added during runtime, this would lead
+to inconsistent and confusing results.
+
+**Re. Distros**: You can't store subtrees inside subtrees. If you maintain a
+distro AND maintain any contrib projects included in that distro, don't organize
+your directories like this:
+
+    my-repo/docroot/profiles/my-profile/modules/contrib/my-module
+    <parent-repo>/docroot/profiles/<subtree>/modules/contrib/<subtree>
+ 
+Instead, do this:
+
+    # Only store your profile project (and any included custom modules that live
+    # in that same repo) here:
+    my-repo/docroot/profiles/my-profile
+
+    # Contrib projects go in sites/all like my-module here:
+    my-repo/docroot/sites/all/modules/contrib/my-module
+
+    # If you want to make clear in the build, which contrib projects are being
+    # included by the distro, name the directory containing all the contrib
+    # projects after your profile, rather than "contrib", like this:
+    my-repo/docroot/sites/all/modules/my-profile/my-module
+
+To get drush make to build your code base ^^ this way, you can either (a) move
+the contents of drupal-org.make into your build-myprofile.make file, or (b)
+create your own build.make with includes referencing build-myprofile.make and
+drupal-org.make and pass drush make the --no-recurse flag.
