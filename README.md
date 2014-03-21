@@ -61,9 +61,9 @@ human error). For more details and examples, see:
     drush subtree --help
 
 If you're not familiar with git-subtree, you may prefer the more Drush-y
-interface, `drush subtree-<verb> <args>`, see:
+interface, *drush subtree-<verb> <args>*, see:
 
-  drush --filter=drushsubtree
+    drush --filter=drushsubtree
 
 Here's a quick overview of the main commands:
 
