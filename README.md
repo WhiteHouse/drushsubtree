@@ -4,7 +4,7 @@ Drush Subtree
 Overview
 --------
 
-Drush Subtree's goal is to reduce friction for Drupal developers who want to
+Drush Subtree's goal is to improve Drupal developers' ability to
 make their work reusable. It provides a wrapper around git-subtree to simplify
 management of Git repos inside a parent repo and it provides integration with
 Drush's Build Manager extension. This enables you to:
@@ -20,12 +20,12 @@ Drush's Build Manager extension. This enables you to:
     distro, module, theme, or custom project.
 
   - For teams working together on a site repository, this enables team
-    members to contribute to a project inside a site repo, through your own private
-    workflow. Then it enables you--the maintainer--to easily push that work out to public
-    repos when it's ready to be released.
+    members to contribute to a project inside a site repo, through your own
+    internal workflow. Then it enables you--the maintainer--to easily push that
+    work out to public repos when it's ready to be released.
 
   - Incorporate Git subtrees into Drush Make builds for your site repository.
-    (Provides support for checkouting out tagged versions of projects, no commit
+    (Provides support for checking out tagged versions of projects, no commit
     ID required.)
 
 
@@ -60,7 +60,7 @@ by Drush Make and Build Manager.)
 If you're already familiar with git-subtree, see documentation and examples for
 the `subtree` command. This interface is the same as git subtree's with a few
 simplifications (it grabs parameters from your Build Manager config, so you
-don't have to type those parameters in over and over or worry about possible
+don't have to type in those parameters over and over or worry about possible
 human error). For more details and examples, see:
 
     drush subtree --help
