@@ -40,6 +40,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $items['subtree-add'] = array(
@@ -53,6 +54,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $items['subtree-pull'] = array(
@@ -66,6 +68,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $items['subtree-merge'] = array(
@@ -82,6 +85,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $push_options = $standard_command_options;
@@ -97,6 +101,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $items['subtree-checkout'] = array(
@@ -112,6 +117,7 @@ function drushsubtree_drush_command() {
     ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   $items['subtree-get-tags'] = array(
@@ -126,6 +132,7 @@ function drushsubtree_drush_command() {
     'aliases' => array('subtree-ls-tags'),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
   );
 
   return $items;
