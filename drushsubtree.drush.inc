@@ -30,6 +30,7 @@ function drushsubtree_drush_command() {
       'command' => '',
       'project' => '',
     ),
+    'options' => $standard_command_options,
     'examples' => array(
       'drush subtree <command> <project>' => '',
       'drush subtree add <project>' => '',
