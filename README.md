@@ -37,7 +37,7 @@ Dependencies
     don't use Build Manager to manager Drush Make builds, Drush Subtree expects
     you to store info about your subtrees in a Build Manager configuration file.
   - (Recommended) Drush master / 7.x (Build Manager uses the Drush Make
-    --no-recurse flag and autoloading which--as of the time of this writing--
+    --no-recursion flag and autoloading which--as of the time of this writing--
     ave not been backported to 6.x)
 
 Usage
@@ -120,8 +120,8 @@ There are a few things you should know about how this works:
 **Re. Drush Make**: Follow the tips for setting up your build.make file included
 in the Build Manager documentation
 [here](https://github.com/whitehouse/buildmanager#tips-for-working-with-make-files).
-Drush Subtree assumes you are using the `--no-recurse` flag with your builds. If
-you do NOT use `--no-recurse` Drush Subtree will not be able to detect subtrees
+Drush Subtree assumes you are using the `--no-recursion` flag with your builds. If
+you do NOT use `--no-recursion` Drush Subtree will not be able to detect subtrees
 and versions included make files that are added during runtime, this would lead
 to inconsistent and confusing results.
 
@@ -149,4 +149,4 @@ Instead, do this:
 To get drush make to build your code base ^^ this way, you can either (a) move
 the contents of drupal-org.make into your build-myprofile.make file, or (b)
 create your own build.make with includes referencing build-myprofile.make and
-drupal-org.make and pass drush make the --no-recurse flag.
+drupal-org.make and pass drush make the --no-recursion flag.
