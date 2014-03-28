@@ -595,8 +595,8 @@ function drushsubtree_buildmanager_build_options() {
  */
 function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
   if ($prompt && drush_confirm("\n" . dt("Does your build include subtrees?")) == FALSE) {
-    // Our work here is done.
-    return;
+    // Our work here is done. Return unmodified $config array.
+    return $config;
   }
   else {
     drush_print("\n" . dt("I'll help you set up configuration for subtrees. Later when Build Manager prompts you for info about symlinks, don't worry about your subtrees. Drush Subtree will take care of setting up and restoring those symlinks for you when Build Manager (re)builds."));
