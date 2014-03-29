@@ -1,5 +1,5 @@
 <?php
-require_once('drushsubtree.subtreecommander.class.inc');
+
 /**
  * @file
  * drushsubtree drush command.
@@ -11,6 +11,8 @@ require_once('drushsubtree.subtreecommander.class.inc');
  *    4. In an arbitrary folder specified with the --include option.
  *    5. Drupal's /drush or /sites/all/drush folders.
  */
+
+require_once 'drushsubtree.subtreecommander.class.inc';
 
 /**
  * Implements hook_drush_command().
@@ -109,7 +111,7 @@ function drushsubtree_drush_command() {
     'description' => 'Faux subtree command. "Checkout" a tagged version of a subtree project.',
     'arguments' => array(
       'project' => '',
-      'tag or commit ID' => 'Git tag or commit ID. (Check available tags with drushsubtree-get-tags. Commit IDs must be passed as full 40 character SHA1 hash. 40 character tags are not supported.)'
+      'tag or commit ID' => 'Git tag or commit ID. (Check available tags with drushsubtree-get-tags. Commit IDs must be passed as full 40 character SHA1 hash. 40 character tags are not supported.)',
     ),
     'options' => $standard_command_options,
     'examples' => array(
@@ -156,7 +158,7 @@ function _drushsubtree_standard_command_options() {
     'simulate' => array(
       'description' => 'Output commands to be executed for examination, but do not actually execute them.',
     ),
-  );  
+  );
 }
 
 /**
@@ -185,7 +187,7 @@ function drush_drushsubtree_subtree_get_tags($subtree_name) {
  * Site make config files can specify a message to be included
  * project-by-project.
  *
- * @param string $message
+ * @param string $subtree_message
  *   Defined in buildmanager YAML config file.
  *
  * @return string
@@ -275,8 +277,8 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
   // First, try getting ID ("revision") from make files.
   $id = _drushsubtree_get_id_from_make_info($subtree_name, $project_info);
 
-  // If no commit ID was specified in make file(s), try looking up ID using remote
-  // list of tags.
+  // If no commit ID was specified in make file(s), try looking up ID using
+  // remote list of tags.
   if (!$id) {
     // Get an array of commit IDs keyed by tags.
     $tags = drushsubtree_list_remote_tags($subtree_name, $details);
@@ -297,7 +299,7 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
     // Success!
     $id = $tags[$tag];
   }
- 
+
   return $id;
 }
 
@@ -436,15 +438,15 @@ function _drushsubtree_subtree_add_symlink($name, $path) {
 /**
  * Implements hook_buildmanager_build().
  *
- * Check for subtrees in config file. Add/update subtrees in build as appropriate.
+ * Check for subtrees in config file. Add/update subtrees in build.
  *
- * @param array $info
+ * param array $info
  *   Info from drush make build file.
  *
- * @param array $config
+ * param array $config
  *   Configuration defined in buildmanager.config.yml
  *
- * @param obj $commands
+ * param obj $commands
  *   Commands to be executed by buildmanager.
  *   - precommands (array), commands to execute before `drush make` (re)build
  *   - postcommands (array), commands to execute after `drush make` (re)build
@@ -472,7 +474,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   // Get symlink commands to be run after `drush make`.
   $symlink_commands = array();
 
-  // Loop through subtrees twice. Repo updates should be done as prebuild commands.
+  // Loop through subtrees twice. Repo updates are done as prebuild commands.
   // Symlinks (which will get blown away by drush make) should be restored as
   // postbuild commands.
   foreach ($config['subtrees'] as $subtree_name => $details) {
@@ -481,8 +483,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     // are sometimes skipped (when no-subtree-updates flag is set).
     // Remove files checked out by drush. Add symlink pointing to local subtree.
     drush_log(dt('Preparing to symlink !subtree_name to path: !path', array('!subtree_name' => $subtree_name, '!path' => $details['path'])), 'ok');
-    $symlink_commands[] = _drushsubtree_subtree_add_symlink($subtree_name,
-                                                          $details['path']);
+    $symlink_commands[] = _drushsubtree_subtree_add_symlink($subtree_name, $details['path']);
 
     // Next add do prebuild commands / subtree repo updates.
     if (drush_get_option('no-subtree-updates', FALSE)) {
@@ -498,16 +499,16 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     // beguinning of $commands->prebuild array.
     // It's important these run before drush make for
     // two reasons: (1) Incase a project's build file includes a make file in a
-    // subtree project. This will ensure the updated make file is included in the
-    // build. (2) This needs to run before anything else dirties the working
+    // subtree project. This will ensure the updated make file is included in
+    // the build. (2) This needs to run before anything else dirties the working
     // tree (like drush make), otherwise the subtree add/pull/merge will fail.
     // First, add git subtree if it doesn't already exist.
     if ($subtree_add = $subtree->add(TRUE)) {
-      drush_log(dt('Preparing to add subtree: !subtree_name', array('!subtree_name' => $subtree_name)), 'ok');
+      drush_log(dt('Preparing to add subtree: !subtree_name',
+             array('!subtree_name' => $subtree_name)), 'ok');
       $subtree_commands[] = $subtree_add;
     }
     // Otherwise, pull in any updates.
-    //elseif ($subtree_pull = _drushsubtree_subtree_pull($subtree_name, $details)) {
     elseif ($subtree_pull = $subtree->pull()) {
       $subtree_commands[] = $subtree_pull;
     }
@@ -523,7 +524,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     }
     else {
       // @todo Detect latest recommended release on d.o when no version is
-      // specified. Consider checking that out to better match standard make file
+      // specified. Consider using that to better match standard make file
       // behavior?
       drush_log(dt("No commit ID specified for !project (if a tag was specified in a make file, the cooresponding commit ID could not be retrieved). Your install will run on the tip of whatever branch you checked out. (Subtrees do not fallback to the latest recommended release on drupal.org when no version is specified.)", array('!project' => $subtree_name)), 'warning');
     }
@@ -533,7 +534,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
 
   // Add symlink commands after drush make but before other commands, incase any
   // custom post-build commands are committing anything. This way, git history
-  // doesn't get polluted with projects being re-added and re-removed every time.
+  // doesn't get polluted with projects being re-added and re-removed each time.
   $commands->postbuild = array_merge($symlink_commands, $commands->postbuild);
 
   // Now add all subtree_commands to begining of prebuild command list.
@@ -576,22 +577,21 @@ function drushsubtree_buildmanager_build_options() {
     're-add' => array(
       'description' => '@todo Remove and re-add comma separated list of subtree(s).',
     ),
-  );  
+  );
 }
 
 /**
  * Implements hook_buildmanager_configure().
  *
  * Prompt for subtree info to be included in buildmanager config.
+ * Returns config with subtree properties added, to be included in
+ * buildmanager.config.yml.
  *
- * @param array $config
- *   @see hook_buildmanager_configure.
+ * param array $config
+ *   See hook_buildmanager_configure.
  *
- * @pararm bool $prompt
+ * pararm bool $prompt
  *   Ask user if project includes subtrees.
- *
- * @return array
- *   Config with subtree properties added, to be included in buildmanager.config.yml.
  */
 function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
   if ($prompt && drush_confirm("\n" . dt("Does your build include subtrees?")) == FALSE) {
@@ -615,12 +615,12 @@ function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
 
     drush_print(dt("Repo URI"));
     $subtrees[$name]['uri'] = drush_prompt("uri");
-    
+
     drush_print(dt("Branch to pull from and push to"));
     $subtrees[$name]['branch'] = drush_prompt(dt("branch"));
 
     drush_print(dt("(Optional) Add a standard commit message to be included in any subtree add/pull/merge commits."));
-    $default_message =  "{$name} subtree from {$subtrees[$name]['uri']}";
+    $default_message = "{$name} subtree from {$subtrees[$name]['uri']}";
     $subtrees[$name]['message'] = drush_prompt(dt("message"), $default_message);
 
     // Continue collecting info about more subtrees?
@@ -630,7 +630,7 @@ function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
   // Show subtree properties to user. Confirm they're right.
   // Show commands to user. Confirm they're right.
   drush_print("\n" . dt("Here are the subtree properties you entered:" . "\n"));
-  drush_print(drush_format($subtrees,  NULL, 'yaml'));
+  drush_print(drush_format($subtrees, NULL, 'yaml'));
   if (!drush_confirm("Are these properties correct?")) {
     // Do over.
     $subtrees = drushsubtree_buildmanager_configure($config);
@@ -667,15 +667,12 @@ function drush_drushsubtree_subtree_add($name = '') {
 /**
  * Find, parse, return buildmanager config.
  *
- * @param string $conf_file
- *   Optional /path/to/buildmanager.config.yml.
- *
  * @return array
  *   Parsed buildmanager.config.yml.
  */
 function _drushsubtree_get_config() {
   if (!function_exists('buildmanager_get_config_file')) {
-    return drush_set_error('drushsubtree', dt('Missing Drush dependency: Build Manager'));  
+    return drush_set_error('drushsubtree', dt('Missing Drush dependency: Build Manager'));
   }
 
   // First check for --config_file=path/to/buildmanager.config.yml flag.
@@ -687,7 +684,7 @@ function _drushsubtree_get_config() {
   // Now parse config file.
   $config = buildmanager_get_config($config_file);
 
-  return $config; 
+  return $config;
 }
 
 /**
@@ -707,14 +704,14 @@ function drush_drushsubtree_subtree_checkout($name, $ref) {
 
   // Make sure there are subtrees in config.
   if (!isset($config['subtrees'])) {
-    return drush_set_error(dt('No subtrees found in buildmanager config file.'));  
+    return drush_set_error(dt('No subtrees found in buildmanager config file.'));
   }
   // Make sure named subtree is there.
-  else if (!isset($config['subtrees'][$name])) {
+  elseif (!isset($config['subtrees'][$name])) {
     return drush_set_error(
       dt('No subtree with this name found in buildmanager config file: !name',
       array('!name' => $name))
-    );  
+    );
   }
   else {
     // Grab project properties from config.
@@ -825,7 +822,7 @@ function _drushsubtree_get_name($config) {
   $names = array_keys($config['subtrees']);
   $names = array_combine($names, $names);
   $name = drush_choice($names, dt('Select a subtree to pull:'));
-  return $name; 
+  return $name;
 }
 
 /**
