@@ -1,6 +1,22 @@
 Drush Subtree
 =============
 
+Contents
+--------
+
+ - [Overview](#overview)
+ - [Dependencies](#dependencies)
+ - [Usage](#usage)
+ - [Build Manager integration and user stories]()
+   - [As a maintainer of contributed modules and themes...]()
+   - [As a maintainer of a site built on somebody else's distro...]()
+   - [As a maintainer of a contributed distro...]()
+ - [Understanding how this all works with Drush Make]()
+   - [Drush Make build files]()
+   - [Drush Make and recursion]()
+   - [Project versions should be declared in toplevel build file]()
+   - [Distro maintainers: Do not store subtrees inside subtrees]()
+
 Overview
 --------
 
@@ -108,8 +124,8 @@ Tips for getting started:
     project's history that's likely to be rewritten before you publish.
 
 
-Build Manager integration
--------------------------
+Build Manager integration and user stories
+------------------------------------------
 
 Drush Subtree integrates with Build Manager to provide a few niceties:
 
@@ -119,12 +135,138 @@ Drush Subtree integrates with Build Manager to provide a few niceties:
     referenced in your make file(s) are subtrees and manage them accordingly
     during your automated (re)builds
 
-There are a few things you should know about how this works:
+See relevant user stories below to find out more about how you can use this.
 
-**Re. Drush Make**: Follow the tips for setting up your build.make file included
-in the Build Manager documentation
-[here](https://github.com/whitehouse/buildmanager#tips-for-working-with-make-files).
-Drush Subtree assumes you are using the `--no-recursion` flag with your builds. If
+### As a maintainer of contributed modules and themes...
+**...I want to be able to work on my project inside my site repo. But I also
+want to be able to pull in updates, when they're coming from outside my site
+repo.**
+
+TODO
+
+
+### As a maintainer of a site built on somebody else's distro...
+**...I want it to be fast and easy to pull in updates, test, and deploy.**
+
+I organize my site repo as described below.
+
+Include the distro named _exampledistro_ in my site repo as a subtree by including the project in _buildmanager.config.yml_ like this:
+
+        subtrees:
+          exampledistro:
+            path: docroot/profiles/exampledistro
+            uri: http://git.drupal.org/project/exampledistro.git
+            branch: 7.x-1.x
+            squash: true
+            message: exampledistro subtree from http://git.drupal.org/project/exampledistro.git
+          
+I make the distro's build file the base of my own build file by writing my _build.make_ like this:
+
+        ; Include exampledistro's build file.
+        includes[base] = projects/exampledistro/build-exampledistro.make
+
+        ; Site-specific overrides and patches to contrib projects included by exampledistro.
+        projects[some-project][patch][12345] = https://drupal.org/files/issues/12345-some-issue-1.patch
+
+        ; Add any additional contrib or custom projects included in my site, but
+        ; not included with the distro I'm using.
+        projects[my-project1][version] = 7.x-3.0
+        projects[my-project2][version] = 7.x-2.2
+
+When I (re)build with `drush buildmanager-build` my repo's directory structure
+looks like this:
+
+        buildmanager.config.yml                  # Build Manger config, stored at toplevel of repo
+        build.make                               # My build file, stored at toplevel of repo
+        projects/exampledistro                   # Subtree of distro
+        default                                  # Includes my settings.php, files directory, etc.
+        docroot                                  # Drupal codebase
+        docroot/sites/default -> ../../default   # Symlink to default directory
+        docroot/profiles/exampledistro           # This is a download of the latest stable release declared
+                                                 # in projects/exampledistro/build-exampledistro.make
+        docroot/sites/all/modules/my-project1    # Contrib projects included by you in build.make go here
+        docroot/sites/all/modules/my-project2    
+        docroot/sites/all/modules/some-project   # Patched version of some-project, overriding what's included
+                                                 # by default with distro.
+
+
+### As a maintainer of a contributed distro...
+**...I want to**
+
+
+Understanding how this all works with Drush Make
+-------------------------------------------------
+
+### Drush Make build files
+
+Drush Subtree stores project subtrees outside your Drupal
+codebase, then includes them via symlinks. This means, it's safe for you to
+include a make file from a subtree project in your toplevel build file.
+
+
+### Drush Make and recursion
+
+Drush Make recursively discovers and includes
+make files when a parent make file downloads another project with it's own make.
+Including new make files in the build recipe at runtime raises a few issues you
+should be aware of when working with subtrees.
+
+#### Project versions should be declared in toplevel build file
+
+When you (re)build a site codebase with buildmanager-build, Drush
+Subtree only finds version information (release tags) available in your toplevel
+make file (e.g. build.make) or in a make file explicitly incuded in the toplevel
+make file. Drush Subtree does NOT automatically manage versions of subtree
+projects discovered by Drush Make at runtime.
+
+Recommendation: Production builds including subtrees should include
+projects with release versions in the toplevel make file (or makefiles
+explicitly included by it).
+
+Alternative: If the recommended practice doesn't work for you for any reason you
+can either (1) accept the fallback behavior, projects will run on the tip of
+whatever branch is specified in your buildmanager.config.yml, or (2) you can add
+your own custom workflow to buildmanager.config.yml as prebuild or postbuild
+commands.
+
+To see all the make files in your code base you can run:
+
+    drush buildmanager-find-make-files
+    drush bmfmf
+
+An easy way to see all the project info included in your toplevel make file is
+to run this command:
+
+    drush buildmanager-build --simulate --show-info
+
+#### Distro maintainers: Do not store subtrees inside subtrees
+
+_Issue #2_: If you maintain an install profile and a contrib project required by
+it, a common directory structure is to include the contrib project _inside_ the
+profile for example: docroot/profiles/my-profile/modules/contrib/my-module.
+Subtrees inside subtrees don't work (well, technically they "work", but it's a nasty mess of a sitution
+and Drush Subtree does not support it). You have a few alternatives:
+
+A. Rather than include multiple make files in your distro, put everything in
+   build-mydistro.make (remove drupal-org.make and drupal-org-core.make). Then Drush Make will put included projects in sites/all
+   rather than inside profiles/my-profile. (Rather than put contrib projects in
+   sites/all/contrib you might put them in sites/all/my-profile to make clear to
+   users that these are projects required by your distro.) This is a nice solution because now
+   you and all the people who use your distro will have the same directory
+   structure, which just keeps things simple and easy to understand.
+
+B. You can leave all your make files as they are, then include as second
+   copy of my-module in sites/all/modules. Drupal will give this module priority
+   and load this one. To do this, make a simple build.make file that looks like
+   this:
+
+        includes[base] = projects/my-profile/build-myprofile.make
+        projects[] = my-project
+
+C. Turn off recursion.
+
+  - TODO note on --no-recursion
+ - Drush Subtree assumes you are using the `--no-recursion` flag with your builds. If
 you do NOT use `--no-recursion` Drush Subtree will not be able to detect subtrees
 and versions included make files that are added during runtime, this would lead
 to inconsistent and confusing results.
