@@ -5,9 +5,12 @@ Overview
 --------
 
 Drush Subtree's goal is to improve Drupal developers' ability to
-make their work reusable. It provides a wrapper around git-subtree to simplify
-management of Git repos inside a parent repo and it provides integration with
-Drush's Build Manager extension. This enables you to:
+make their work reusable. Specifically, it simplifies workflows for developing
+and maintaining contributed projects by enabling you to do development on
+contrib projects from inside a parent site repository. It does this by providing
+a wrapper around git-subtree to help you manage Git repos
+inside a parent repo and by providing integration with Drush's Build
+Manager extension for automating builds and using subtrees with Drush Make.
 
   - Use Build Manager's interactive prompt to set your site up with Git subtrees
     for projects you maintain outsite the parent site repository.
@@ -25,8 +28,8 @@ Drush's Build Manager extension. This enables you to:
     work out to public repos when it's ready to be released.
 
   - Incorporate Git subtrees into Drush Make builds for your site repository.
-    (Provides support for checking out tagged versions of projects, no commit
-    ID required.)
+    (Provides support for checking out tagged versions of subtree projects without
+    providing a specific commit ID.)
 
 
 Dependencies
@@ -45,8 +48,7 @@ Usage
 
 Store info about your site repository's subtrees in a Build Manager
 configuration file. Use the interactive prompt to have Build Manager generate
-this file for you, or see examples
-[here](https://github.com/whitehouse/buildmanager) to create the file manually.
+this file for you, or see examples included with Drush Subtree to create the file manually.
 
 Start the interactive prompt like this:
 
@@ -56,19 +58,6 @@ Next you can manually add/update subtrees with the commands described below, or 
 Build Manger builds. (See [Build Manger integration](#build-manager-integration)
 for information on how Drush Subtree works with automateds builds managed
 by Drush Make and Build Manager.)
-
-If you're already familiar with git-subtree, see documentation and examples for
-the `subtree` command. This interface is the same as git subtree's with a few
-simplifications (it grabs parameters from your Build Manager config, so you
-don't have to type in those parameters over and over or worry about possible
-human error). For more details and examples, see:
-
-    drush subtree --help
-
-If you're not familiar with git-subtree, you may prefer the more Drush-y
-interface, *drush subtree-\<verb\> \<args\>*, see:
-
-    drush --filter=drushsubtree
 
 Here's a quick overview of the main commands:
 
@@ -92,6 +81,15 @@ Here's a quick overview of the main commands:
     # Specify a particular commit ID to use or "checkout" for a subtree project.
     drush subtree merge <project> <id>
 
+For more details and examples, see:
+
+    drush subtree --help
+
+If you're not familiar with git-subtree, you may prefer the more Drush-y
+interface, *drush subtree-\<verb\> \<args\>*, see:
+
+    drush --filter=drushsubtree
+
 Tips for getting started:
 
   - To see what's going on with git under the hood, use Drush's verbose flag `-v`
@@ -102,7 +100,13 @@ Tips for getting started:
     changes out cleanly. For projects that are NOT stored in a subtree, this
     will make it easy for you to break custom projects out of your site repo and
     make them stand-alone projects later, without losing your commit history.
- 
+  - To keep things light, clean, and simple: Only add subtrees to your code base
+    for projects (or forks) you maintain or actively work on. Use vanilla Drush
+    Make downloads for everything else.
+  - Subtree add/pull/merge commits don't like to be rebased. Avoid running these
+    commands in the middle of active development, during a part of your
+    project's history that's likely to be rewritten before you publish.
+
 
 Build Manager integration
 -------------------------
