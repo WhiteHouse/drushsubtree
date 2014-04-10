@@ -529,7 +529,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       drush_log(dt("No commit ID specified for !project (if a tag was specified in a make file, the cooresponding commit ID could not be retrieved). Your install will run on the tip of whatever branch you checked out. (Subtrees do not fallback to the latest recommended release on drupal.org when no version is specified.)", array('!project' => $subtree_name)), 'warning');
     }
 
-  // End loop thorugh subtrees.
+    // End loop thorugh subtrees.
   }
 
   // Add symlink commands after drush make but before other commands, incase any
@@ -657,10 +657,16 @@ function drush_drushsubtree_subtree_add($name = '') {
   }
 
   // Generate subtree add command and execute it.
+  if (!isset($config['subtrees'][$name])) {
+    drush_log(dt('Sorry. No properties for a subtree with this name could be found in your config file: !name',
+      array('!name' => $name)), 'error');
+  }
+
+  // Generate subtree add command and execute it.
   $properties = $config['subtrees'][$name];
   $subtree = new SubtreeCommander($name, $properties);
   if ($subtree_add = $subtree->add()) {
-    drush_shell_exec($subtree_add);
+    _drushsubtree_shell_exec($subtree_add);
   }
 }
 
@@ -732,7 +738,7 @@ function drush_drushsubtree_subtree_checkout($name, $ref) {
   drush_print(dt('Note: "checkout" is not a real subtree command. This is really just a friendly wrapper around subtree merge.'), 'notice');
 
   $subtree = new SubtreeCommander($name, $properties);
-  drush_shell_exec($subtree->merge($id, $tag));
+  _drushsubtree_shell_exec($subtree->merge($id, $tag));
 }
 
 /**
@@ -752,7 +758,7 @@ function drush_drushsubtree_subtree_pull($name = '') {
 
   $properties = $config['subtrees'][$name];
   $subtree = new SubtreeCommander($name, $properties);
-  drush_shell_exec($subtree->pull());
+  _drushsubtree_shell_exec($subtree->pull());
 }
 
 /**
@@ -784,7 +790,7 @@ function drush_drushsubtree_subtree_merge($name = '', $id = '') {
   }
 
   $subtree = new SubtreeCommander($name, $properties);
-  drush_shell_exec($subtree->merge($id, $tag));
+  _drushsubtree_shell_exec($subtree->merge($id, $tag));
 }
 
 /**
@@ -804,7 +810,7 @@ function drush_drushsubtree_subtree_push($name) {
 
   $properties = $config['subtrees'][$name];
   $subtree = new SubtreeCommander($name, $properties);
-  drush_shell_exec($subtree->push());
+  _drushsubtree_shell_exec($subtree->push());
 }
 
 /**
@@ -849,4 +855,24 @@ function drush_drushsubtree_subtree() {
 
   // Call drush subtree <command> [<args>,...].
   call_user_func_array($function, $args);
+}
+
+/**
+ * Wrapper around drush_shell_exec for standard error reporting.
+ *
+ * @param string $command
+ *   Command to be executed.
+ *
+ * @return bool
+ *   Succes/fail based on drush_shell_exec result.
+ */
+function _drushsubtree_shell_exec($command) {
+  $success = drush_shell_exec($command);
+  if (!$success) {
+    // Command failed. Notify user and exit.
+    drush_log(dt('Command failed: !command', array('!command' => $command)), 'error');
+    $output = implode("\n", drush_shell_exec_output());
+    return drush_set_error($output);
+  }
+  return $success;
 }
