@@ -743,7 +743,7 @@ function drush_drushsubtree_subtree_checkout($name, $ref) {
  */
 function drush_drushsubtree_subtree_pull($name = '') {
   // Get buildmanager config.
-  $config = _drushsubtree_get_config($config_file);
+  $config = _drushsubtree_get_config();
 
   // Get name if not passed as argument.
   if (!$name) {
