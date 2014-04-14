@@ -526,7 +526,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       // @todo Detect latest recommended release on d.o when no version is
       // specified. Consider using that to better match standard make file
       // behavior?
-      drush_log(dt("No commit ID specified for !project (if a tag was specified in a make file, the cooresponding commit ID could not be retrieved). Your install will run on the tip of whatever branch you checked out. (Subtrees do not fallback to the latest recommended release on drupal.org when no version is specified.)", array('!project' => $subtree_name)), 'warning');
+      drush_log(dt("No commit ID specified for !project (if a tag was specified in a make file, the corresponding commit ID could not be retrieved). Your install will run on the tip of whatever branch you checked out. (Subtrees do not fallback to the latest recommended release on drupal.org when no version is specified.)", array('!project' => $subtree_name)), 'warning');
     }
 
     // End loop thorugh subtrees.
