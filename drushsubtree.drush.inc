@@ -693,11 +693,10 @@ function drush_drushsubtree_subtree_add($name = '') {
   if (!$name) {
     $name = _drushsubtree_get_name($config);
   }
-
-  // Generate subtree add command and execute it.
-  if (!isset($config['subtrees'][$name])) {
-    drush_log(dt('Sorry. No properties for a subtree with this name could be found in your config file: !name',
-      array('!name' => $name)), 'error');
+  // Otherwise, confirm name passed is valid.
+  elseif (!isset($config['subtrees'][$name])) {
+    return drush_set_error(dt('Sorry. No properties for a subtree with this name could be found in your config file: !name',
+        array('!name' => $name)));
   }
 
   // Generate subtree add command and execute it.
@@ -866,7 +865,7 @@ function drush_drushsubtree_subtree_push($name) {
 function _drushsubtree_get_name($config) {
   $names = array_keys($config['subtrees']);
   $names = array_combine($names, $names);
-  $name = drush_choice($names, dt('Select a subtree to pull:'));
+  $name = drush_choice($names, dt('Select a subtree to add/pull:'));
   return $name;
 }
 
