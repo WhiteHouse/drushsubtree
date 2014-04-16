@@ -444,6 +444,9 @@ function _drushsubtree_get_project_tag($project_name, $project_info, $core = '')
     $version = $project_info['version'];
     $tag = "{$core}-{$version}";
   }
+  elseif (isset($project_info['tag'])) {
+    $tag = $project_info['tag'];
+  }
   elseif (isset($project_info['download']['tag'])) {
     $tag = $project_info['download']['tag'];
   }
