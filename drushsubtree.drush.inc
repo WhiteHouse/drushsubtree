@@ -880,8 +880,76 @@ function _drushsubtree_shell_exec($command) {
   if (!$success) {
     // Command failed. Notify user and exit.
     drush_log(dt('Command failed: !command', array('!command' => $command)), 'error');
-    $output = implode("\n", drush_shell_exec_output());
-    return drush_set_error($output);
+    $output = drush_shell_exec_output();
+    drush_log(implode("\n", $output), 'error');
+    $error_message = drushsubtree_parse_error_output($output);
+    return drush_set_error($error_message);
   }
   return $success;
+}
+
+/**
+ * Implements hook_buildmanager_parse_error_output().
+ */
+function drushsubtree_buildmanager_parse_error_output($output) {
+  if ($message = drushsubtree_parse_error_output($output, FALSE)) {
+    drush_log($message, 'error');
+  }
+}
+
+/**
+ * Parse exec() $output for known problems. Provide helpul tips.
+ *
+ * @param array $output
+ *   Output, line by line, returned by exec().
+ *
+ * @param bool $return_generic
+ *   Return a generic message if no specific insight is available.
+ *
+ * @return string
+ *   Helpful error message. Tip, if available.
+ */
+function drushsubtree_parse_error_output($output, $return_generic = TRUE) {
+  $message = '';
+
+  foreach ($output as $line) {
+    $message .= drushsubtree_parse_error_line($line);
+  }
+
+  if (!$message && $return_generic) {
+    // No special helpful message is available.
+    $message = dt('Review git-subtree error message above to see why your drush subtree command failed.');
+  }
+
+  return $message;
+}
+
+/**
+ * Parse a line of error output for known problems. Provide helpul tips.
+ *
+ * @param string $line
+ *   Individual line of $output. @see drushsubtree_parse_error_output.
+ *
+ * @return string
+ *   Translated string to be appended to error message for user.
+ */
+function drushsubtree_parse_error_line($line) {
+  $message = '';
+
+  // An error message like this indicates that the directory ("prefix") being
+  // pulled into is not a subtree:
+  // "Can't squash-merge: 'projects/my-project' was never added."
+  $beginning = substr($line, 0, 19);
+  $ending = substr($line, -16);
+  if ($beginning == "Can't squash-merge:" && $ending == "was never added.") {
+    $prefix = substr($line, 21, -18);
+    $project = substr($line, strrpos($line, '/') + 1, -18 );
+    $message = dt("There are files here, !here, but they were not added to the repo with `drush subtree add` or `git subtree add`. To fix: !fix",
+      array('!here' => $prefix, '!fix' => "\n\tgit rm -r {$prefix};\n\tgit commit -m 'Remove files to be re-added with subtree add.';\n\tdrush subtree add {$project};")
+    );
+  }
+
+  // @todo Add more checks for common errors here...
+
+  return $message;
 }
