@@ -138,13 +138,25 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
-  $items['subtree-show-subtrees'] = array(
+  $items['subtree-get-subtrees'] = array(
     'description' => "View a list of subtree projects specified in buildmanager config",
     'examples' => array(
       'drush subtree-show-subtrees' => '',
       'drush sss' => '',
     ),
     'aliases' => array('sss'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
+  $items['subtree-get-info'] = array(
+    'description' => "Get info from config file for subtree.",
+    'examples' => array(
+      'drush subtree-get-info' => '',
+      'drush sgi' => '',
+    ),
+    'aliases' => array('sgi'),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'drush dependencies' => 'buildmanager',
@@ -984,11 +996,32 @@ function drushsubtree_parse_error_line($line) {
 }
 
 /**
- * Callback for subtree-show-subtrees.
+ * Callback for subtree-get-subtrees.
  */
-function drush_drushsubtree_subtree_show_subtrees() {
+function drush_drushsubtree_subtree_get_subtrees() {
   $config = _drushsubtree_get_config();
   foreach ($config['subtrees'] as $name => $details) {
     drush_print($name);
   }
+}
+
+/**
+ * Callback for subtree-get-info.
+ */
+function drush_drushsubtree_subtree_get_info($name = '') {
+  // Get buildmanager config.
+  $config = _drushsubtree_get_config();
+
+  // Get name if not passed as argument.
+  if (!$name) {
+    $name = _drushsubtree_get_name($config);
+  }
+  // Otherwise, confirm name passed is valid.
+  elseif (!isset($config['subtrees'][$name])) {
+    return drush_set_error(dt('Sorry. No properties for a subtree with this name could be found in your config file: !name',
+        array('!name' => $name)));
+  }
+
+  $info[$name] = $config['subtrees'][$name];
+  drush_print("\n" . drush_format($info, NULL, 'yaml'));
 }
