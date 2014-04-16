@@ -291,8 +291,11 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
   elseif ($tags && !$tag) {
     // Tags were retrieved successfully. No tag was passed in. See if we can get
     // tag/version from make file(s).
-    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info);
+    $config = _drushsubtree_get_config();
+    $core = buildmanager_get_core_version($config);
+    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $core);
   }
+
   // If we've got an array of IDs keyed by tags ($tags) and a tag to look up
   // ($tags), we've got what we need now.
   if ($tags && $tag) {
@@ -376,14 +379,19 @@ function drushsubtree_list_remote_tags($project_name, $details) {
  * @param array $project_info
  *   Project info array from make files.
  *
+ * @param string $core
+ *   Core version (e.g. 6.x, 7.x, 8.x). Required if tag is being looked up from
+ *   a project's version number in a make file.
+ *
  * @return string
  *   Project version number specified in make file. Empty if unavailable.
  */
-function _drushsubtree_get_project_tag($project_name, $project_info) {
+function _drushsubtree_get_project_tag($project_name, $project_info, $core = '') {
   $tag = '';
 
-  if (isset($project_info['version'])) {
-    $tag = $project_info['version'];
+  if (isset($project_info['version']) && $core) {
+    $version = $project_info['version'];
+    $tag = "{$core}-{$version}";
   }
   elseif (isset($project_info['download']['tag'])) {
     $tag = $project_info['download']['tag'];
@@ -516,7 +524,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     // Use git subtree merge to check out a particular version of a project.
     // First get the git commit ID to merge to using info from make files.
     $project_info = $info['projects'][$subtree_name];
-    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info);
+    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $info['core']);
     $id = _drushsubtree_get_project_id($subtree_name, $project_info,
                                        $details, $tag);
     if ($id) {
@@ -785,7 +793,8 @@ function drush_drushsubtree_subtree_merge($name = '', $id = '') {
   // Get git tag and id.
   $properties = $config['subtrees'][$name];
   if (!$id) {
-    $tag = _drushsubtree_get_project_tag($name, $project_info);
+    $core = buildmanager_get_core_version($config);
+    $tag = _drushsubtree_get_project_tag($name, $project_info, $core);
     $id = _drushsubtree_get_project_id($name, $project_info, $properties, $tag);
   }
 
