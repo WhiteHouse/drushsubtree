@@ -138,6 +138,18 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
+  $items['subtree-show-subtrees'] = array(
+    'description' => "View a list of subtree projects specified in buildmanager config",
+    'examples' => array(
+      'drush subtree-show-subtrees' => '',
+      'drush sss' => '',
+    ),
+    'aliases' => array('sss'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
   return $items;
 }
 
@@ -970,4 +982,14 @@ function drushsubtree_parse_error_line($line) {
   // @todo Add more checks for common errors here...
 
   return $message;
+}
+
+/**
+ * Callback for subtree-show-subtrees.
+ */
+function drush_drushsubtree_subtree_show_subtrees() {
+  $config = _drushsubtree_get_config();
+  foreach ($config['subtrees'] as $name => $details) {
+    drush_print($name);
+  }
 }
