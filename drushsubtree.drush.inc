@@ -324,11 +324,10 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
   // If we've got an array of IDs keyed by tags ($tags) and a tag to look up
   // ($tags), we've got what we need now.
   if ($tags && $tag) {
-    if (isset($tags[$tag])) {
-      // Success!
-      $id = $tags[$tag];
-    }
-    else {
+
+    // Error handling. Make sure the tag specified in the make file(s) is
+    // available in the remote we're pulling commit IDs from.
+    if (!isset($tags[$tag])) {
       $message = dt("The version/tag specified by your build.make file does not correspond with tags available at the remote we're pulling from.");
       $message .= "\n" . dt("Review available tags like this: !command",
         array('!command' => "\n\tdrush subtree-get-tags {$subtree_name}"));
@@ -342,6 +341,17 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
         array('!specs' => $specs));
       return drush_set_error($message);
     }
+
+    // Check for annotated tags. Use those when available. Otherwise users end
+    // up getting a confusing 'fatal: bad object' error message from git.
+    // Annotated tags look like this: 7.x-2.0^{} for 7.x-2.0.
+    $annotated_tag = "{$tag}^{}";
+    if (isset($tags[$annotated_tag])) {
+      $tag = $annotated_tag;
+    }
+
+    // Success!
+    $id = $tags[$tag];
   }
 
   return $id;
