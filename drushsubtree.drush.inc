@@ -251,6 +251,7 @@ function _drushsubtree_get_branch($details) {
 
   return $details['branch'];
 }
+
 /**
  * Figure out what version of a subtree project should be checked out.
  *
@@ -282,11 +283,11 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
   if (!$id) {
     // Get an array of commit IDs keyed by tags.
     $tags = drushsubtree_list_remote_tags($subtree_name, $details);
-  }
-  if (!$id && !$tags) {
-    // Attempt to retrieved tags from remote failed.
-    drush_log(dt("Commit IDs for !name tags could not be retrieved from !remote.\nTo explicitly designate which commit ID to check out, you can add this to your makefile (replace abc1234 with a real commit ID):\n\tprojects[!name][download][revision] = abc1234",
-      array('!name' => $subtree_name, '!remote' => $details['uri'])), 'warning');
+    if (!$tags) {
+      // Attempt to retrieved tags from remote failed.
+      drush_log(dt("Commit IDs for !name tags could not be retrieved from !remote.\nTo explicitly designate which commit ID to check out, you can add this to your makefile (replace abc1234 with a real commit ID):\n\tprojects[!name][download][revision] = abc1234",
+        array('!name' => $subtree_name, '!remote' => $details['uri'])), 'warning');
+    }
   }
   elseif ($tags && !$tag) {
     // Tags were retrieved successfully. No tag was passed in. See if we can get
@@ -299,8 +300,24 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
   // If we've got an array of IDs keyed by tags ($tags) and a tag to look up
   // ($tags), we've got what we need now.
   if ($tags && $tag) {
-    // Success!
-    $id = $tags[$tag];
+    if (isset($tags[$tag])) {
+      // Success!
+      $id = $tags[$tag];
+    }
+    else {
+      $message = dt("The version/tag specified by your build.make file does not correspond with tags available at the remote we're pulling from.");
+      $message .= "\n" . dt("Review available tags like this: !command",
+        array('!command' => "\n\tdrush subtree-get-tags {$subtree_name}"));
+      // Display specs determined by make file and buildmanager config for user
+      // to review.
+      $specs = '';
+      $specs .= "\n\tproject:\t{$subtree_name}";
+      $specs .= "\n\ttag:\t\t{$tag}";
+      $specs .= "\n\tremote:\t\t{$details['uri']}";
+      $message .= "\n" . dt("Or see if you can spot a mistake in your make file or buildmanager config here: !specs",
+        array('!specs' => $specs));
+      return drush_set_error($message);
+    }
   }
 
   return $id;
@@ -525,6 +542,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     // First get the git commit ID to merge to using info from make files.
     $project_info = $info['projects'][$subtree_name];
     $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $info['core']);
+
     $id = _drushsubtree_get_project_id($subtree_name, $project_info,
                                        $details, $tag);
     if ($id) {
@@ -943,7 +961,7 @@ function drushsubtree_parse_error_line($line) {
   $ending = substr($line, -16);
   if ($beginning == "Can't squash-merge:" && $ending == "was never added.") {
     $prefix = substr($line, 21, -18);
-    $project = substr($line, strrpos($line, '/') + 1, -18 );
+    $project = substr($line, strrpos($line, '/') + 1, -18);
     $message = dt("There are files here, !here, but they were not added to the repo with `drush subtree add` or `git subtree add`. To fix: !fix",
       array('!here' => $prefix, '!fix' => "\n\tgit rm -r {$prefix};\n\tgit commit -m 'Remove files to be re-added with subtree add.';\n\tdrush subtree add {$project};")
     );
