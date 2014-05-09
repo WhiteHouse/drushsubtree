@@ -138,6 +138,21 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
+  $items['subtree-get-head'] = array(
+    'description' => "Get HEAD commit id for subtree project (display corresponding tag, if there is one.",
+    'arguments' => array(
+      'project_name' => '',
+    ),
+    'examples' => array(
+      'drush subtree-get-head <my-project>' => '',
+      'drush subtree-split <my-project>' => 'Like `git subtree split` command.',
+    ),
+    'aliases' => array('subtree-split'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
   $items['subtree-get-subtrees'] = array(
     'description' => "View a list of subtree projects specified in buildmanager config",
     'examples' => array(
@@ -192,7 +207,7 @@ function drush_drushsubtree_subtree_get_tags($subtree_name) {
   // Get config.
   $config = _drushsubtree_get_config();
   if (!$details = $config['subtrees'][$subtree_name]) {
-    drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
       array('!subtree' => $subtree_name, '!config_file' => $config_file));
   }
 
@@ -202,6 +217,68 @@ function drush_drushsubtree_subtree_get_tags($subtree_name) {
   foreach ($tags as $tag => $id) {
     drush_print("{$tag}\t{$id}");
   }
+}
+
+/**
+ * Callback for drushsubtree-get-head().
+ */
+function drush_drushsubtree_subtree_get_head($subtree_name) {
+  // Get config.
+  $config = _drushsubtree_get_config();
+  if (!$details = $config['subtrees'][$subtree_name]) {
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+      array('!subtree' => $subtree_name, '!config_file' => $config_file));
+  }
+
+  // Instantiated subtree command generator.
+  $subtree = new SubtreeCommander($subtree_name, $details);
+
+  // Execute split command to get commit id.
+  exec($subtree->split(), $output, $exit_code);
+  if ($exit_code !== 0) {
+    drush_log(drush_print_r($output), 'error');
+    return drush_set_error(dt("Sorry. Git subtree split failed. Couldn't retrieve HEAD."));
+  }
+  // Retrieve HEAD.
+  $head = $output[0];
+  $result = "subtree: {$subtree_name}\nHEAD\t{$head}";
+  
+  // Check for matching tag.
+  if ($tag = _drush_subtree_find_tag($subtree_name, $head, $details)) {
+    $result .= "\t{$tag}";
+  }
+
+  // Print result.
+  drush_print($result);
+}
+
+/**
+ * Find tag corresponding to commit ID (if one exists).
+ *
+ * @param string $name
+ *   Subtree project name.
+ *
+ * @param string $id
+ *   Git commit ID.
+ *
+ * @param array $details
+ *   Subtree project details from buildmanager config file.
+ *
+ * @return string|bool
+ *   Tag name, false if not available.
+ */
+function _drush_subtree_find_tag($name, $id, $details) {
+  // Assume there's no match unless we find one.
+  $matching_tag = FALSE;
+
+  // Check remote tags for matching commit ID.
+  foreach(drushsubtree_list_remote_tags($name, $details) as $tag => $tag_id) {
+    if ($id == $tag_id) {
+      $matching_tag = $tag; 
+    }
+  }
+
+  return $matching_tag;
 }
 
 

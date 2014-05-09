@@ -205,6 +205,21 @@ class SubtreeCommander extends Commander {
   }
 
   /**
+   * Generate git subtree split command to be run from top-level of repo.
+   *
+   * This command is stored in SubtreeCommander's command property.
+   *
+   * @return string|bool
+   *   Executable shell command. False for don't do anything. This command
+   *   returns commit ID for the tip of the subtree project's commit history.
+   */
+  function split() {
+    $prefix = _drushsubtree_get_prefix($this->name);
+    $this->command = "git subtree split --prefix={$prefix}";
+    return $this->command;
+  }
+
+  /**
    * Getters and setters for properties.
    */
   function getName() {
