@@ -654,7 +654,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
 
     // Get project info.
     $project_info = array();
-    if (isset($info['projects'][$subtree_name]) {
+    if (isset($info['projects'][$subtree_name])) {
       $project_info = $info['projects'][$subtree_name];
     }
     // If it's not a "project" it's a "library".
