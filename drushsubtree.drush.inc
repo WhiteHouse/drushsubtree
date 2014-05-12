@@ -652,9 +652,24 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       $subtree_commands[] = $subtree_pull;
     }
 
+    // Get project info.
+    $project_info = array();
+    if (isset($info['projects'][$subtree_name]) {
+      $project_info = $info['projects'][$subtree_name];
+    }
+    // If it's not a "project" it's a "library".
+    elseif (isset($info['libraries'][$subtree_name])) {
+      $project_info = $info['libraries'][$subtree_name];
+    }
+    // Can't find info in available make files.
+    else {
+      drush_log(dt("Could not find info in make file(s): !name", 
+        array('!name' => $subtree_name)), 'error');
+      continue;
+    }
+
     // Use git subtree merge to check out a particular version of a project.
     // First get the git commit ID to merge to using info from make files.
-    $project_info = $info['projects'][$subtree_name];
     $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $info['core']);
 
     $id = _drushsubtree_get_project_id($subtree_name, $project_info,
