@@ -663,9 +663,8 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     }
     // Can't find info in available make files.
     else {
-      drush_log(dt("Could not find info in make file(s): !name", 
-        array('!name' => $subtree_name)), 'error');
-      continue;
+      drush_log(dt("Could not find info in make file(s) about this project: !name", 
+        array('!name' => $subtree_name)), 'warning');
     }
 
     // Use git subtree merge to check out a particular version of a project.
