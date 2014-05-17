@@ -150,7 +150,7 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
-  $items['subtree-get-remote-head'] = array(
+  $items['subtree-get-head-remote'] = array(
     'description' => "Get HEAD commit id for subtree project's remote repo.",
     'arguments' => array(
       'project_name' => '',
@@ -158,6 +158,7 @@ function drushsubtree_drush_command() {
     'examples' => array(
       'drush subtree-get-remote-head <my-project>' => '',
     ),
+    'aliases' => array('subtree-get-remote-head'),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'drush dependencies' => 'buildmanager',
