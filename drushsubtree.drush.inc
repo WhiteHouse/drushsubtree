@@ -528,12 +528,15 @@ function _drushsubtree_get_id_from_make_info($project_name, $project_info) {
  *   Commit IDs keyed by tag name. False for failure.
  */
 function drushsubtree_list_remote_tags($project_name, $details) {
+  // Instantiate git command generator.
+  $git = new GitCommander(array('uri' => $details['uri']));
+
   // Get a list of commit IDs and corresponding tags. A successful request
   // returns something like this:
   // 516726690a5f3a15ccf8d7ffccd135db4375ad10  refs/tags/7.x-1.0-rc1
   // e214ea5b94f345b66f302d0d4aae232b4128c1e3  refs/tags/7.x-1.0-rc2
   // 8f61c66e5f55e72a35f4a1b8f4eee93a428a03ac  refs/tags/7.x-1.0-rc3
-  $command = "git ls-remote --tags {$details['uri']}";
+  $command = $git->listRemoteTags();
 
   // Each line of output is stored in $output array.
   // $exit_code is 0 for success, anything else for failure.
