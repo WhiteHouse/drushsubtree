@@ -300,7 +300,7 @@ function drushsubtree_get_remote_head($uri, $branch) {
 
   // Get remote HEAD. The command will look like this:
   // git ls-remote --heads https://github.com/whitehouse/petitions 7.x-2.x
-  $command = $git->get_remote_head();
+  $command = $git->getRemoteHead();
   exec($command, $output, $exit_code);
 
   // Handle failure.

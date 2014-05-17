@@ -31,7 +31,7 @@ class GitCommander extends Commander {
    *
    * @param 
    */
-  function list_remote_tags() {
+  function listRemoteTags() {
      if (!$this->uri) {
        throw new Exception("GitCommander::list_remote_head requires uri info.");  
      }
@@ -42,7 +42,7 @@ class GitCommander extends Commander {
   /** 
    * Provides command to get HEAD for specified remote branch.
    */
-   function get_remote_head() {
+   function getRemoteHead() {
      if (!$this->uri || !$this->branch) {
        throw new Exception("GitCommander::get_remote_head requires uri and branch info.");  
      }
