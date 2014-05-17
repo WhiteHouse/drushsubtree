@@ -13,6 +13,7 @@
  */
 
 require_once 'drushsubtree.subtreecommander.class.inc';
+require_once 'drushsubtree.gitcommander.class.inc';
 
 /**
  * Implements hook_drush_command().
@@ -141,9 +142,22 @@ function drushsubtree_drush_command() {
     ),
     'examples' => array(
       'drush subtree-get-head <my-project>' => '',
-      'drush subtree-split <my-project>' => 'Like `git subtree split` command.',
+      'drush subtree-split <my-project>' => 'Same as `git subtree split --prefix=<my-project>`',
     ),
     'aliases' => array('subtree-split'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
+  $items['subtree-get-remote-head'] = array(
+    'description' => "Get HEAD commit id for subtree project's remote repo.",
+    'arguments' => array(
+      'project_name' => '',
+    ),
+    'examples' => array(
+      'drush subtree-get-remote-head <my-project>' => '',
+    ),
     // No bootstrap at all.
     'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
     'drush dependencies' => 'buildmanager',
@@ -246,6 +260,60 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
 
   // Print result.
   drush_print($result);
+}
+
+/**
+ * Callback for drushsubtree-get-remote-head().
+ */
+function drush_drushsubtree_subtree_get_remote_head($subtree_name) {
+  // Get config.
+  $config = _drushsubtree_get_config();
+  if (!$details = $config['subtrees'][$subtree_name]) {
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+      array('!subtree' => $subtree_name, '!config_file' => $config_file));
+  }
+
+  // Get HEAD.
+  $uri = $details['uri'];
+  $branch = $details['branch'];
+  $head = drushsubtree_get_remote_head($uri, $branch);
+
+  // Print result.
+  drush_print("{$head}\t{$uri}\t{$branch}");
+}
+
+/**
+ * Get HEAD for branch on some remote repo.
+ *
+ * @param string $uri
+ *   URI for remote repo.
+ *
+ * @param string $branch
+ *   Branch on remote repo
+ *
+ * @return string
+ *   Commit ID for remote HEAD
+ */
+function drushsubtree_get_remote_head($uri, $branch) {
+  // Instantiated git command generator.
+  $git = new GitCommander(array('uri' => $uri, 'branch' => $branch));
+
+  // Get remote HEAD. The command will look like this:
+  // git ls-remote --heads https://github.com/whitehouse/petitions 7.x-2.x
+  $command = $git->get_remote_head();
+  exec($command, $output, $exit_code);
+
+  // Handle failure.
+  if ($exit_code !== 0) {
+    return drush_set_error('drushsubtree', dt("Request for remote head list failed: !command", array('!command' => $command)));
+  }
+
+  // Parse result. The output will look like this:
+  // 065f1f81709febfcb0d1429b100a1709d64c1c4d  refs/heads/7.x-2.x
+  $parts = explode("\t", $output[0]);
+  $head = $parts[0];
+
+  return $head;
 }
 
 /**
