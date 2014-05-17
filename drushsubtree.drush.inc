@@ -21,11 +21,6 @@ function drushsubtree_drush_command() {
   $items = array();
   $standard_command_options = _drushsubtree_standard_command_options();
 
-  // TODO Add this:
-  /*
-  $items['subtree-remote'] = array(
-  // */
-
   $items['subtree'] = array(
     'description' => 'An interface for running drushsubtree commands with more git-like syntax. (All options for all commands are supported. See `drush subtree-<command>` --help for documentation about options for particular commands.)',
     'arguments' => array(
@@ -34,6 +29,7 @@ function drushsubtree_drush_command() {
     ),
     'options' => $standard_command_options,
     'examples' => array(
+      'drush subtree' => 'When args and options are missing, displays usage instructions.',
       'drush subtree <command> <project>' => '',
       'drush subtree add <project>' => '',
       'drush subtree pull <project>' => '',
@@ -981,7 +977,7 @@ function drush_drushsubtree_subtree_push($name) {
 function _drushsubtree_get_name($config) {
   $names = array_keys($config['subtrees']);
   $names = array_combine($names, $names);
-  $name = drush_choice($names, dt('Select a subtree to add/pull:'));
+  $name = drush_choice($names, dt('Select a subtree project:'));
   return $name;
 }
 
