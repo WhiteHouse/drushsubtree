@@ -715,11 +715,6 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     return;
   }
 
-  // @todo Check if there are uncommitted changes locally. Exit if there are.
-  // Otherwise, subtree add/pull won't work.
-  // If there are subtrees in the config file, get commands for adding/updating
-  // subtrees.
-
   drush_log(dt('Preparing to add/update git subtrees.'), 'ok');
 
   // Prep projects directory. All subtrees will use --prefix=projects/$name
