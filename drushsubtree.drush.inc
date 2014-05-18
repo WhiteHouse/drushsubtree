@@ -726,9 +726,13 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   // Get symlink commands to be run after `drush make`.
   $symlink_commands = array();
 
-  // Loop through subtrees twice. Repo updates are done as prebuild commands.
-  // Symlinks (which will get blown away by drush make) should be restored as
-  // postbuild commands.
+  // Loop through all subtrees described in buildmanager config to add prebuild
+  // and postbuild commands.
+  // Prebuild:
+  // - Validation checks and warnings.
+  // - Subtree updates (add, pull, merge).
+  // Postbuild:
+  // - Symlinks (which will get blown away by drush make) are restored.
   foreach ($config['subtrees'] as $subtree_name => $details) {
 
     // Start with postbuild commands (adding symlinks) because prebuild commands
@@ -737,11 +741,44 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     drush_log(dt('Preparing to symlink !subtree_name to path: !path', array('!subtree_name' => $subtree_name, '!path' => $details['path'])), 'ok');
     $symlink_commands[] = _drushsubtree_subtree_add_symlink($subtree_name, $details['path']);
 
-    // Next add do prebuild commands / subtree repo updates.
+    // Next add prebuild commands / subtree repo updates.
     if (drush_get_option('no-subtree-updates', FALSE)) {
       // If no-subtree-updates flag is set, skip the rest of the foreach loop.
       drush_log(dt('Skipping git subtree updates.'), 'ok');
       continue;
+    }
+
+    // Get project info.
+    $project_info = array();
+    if (isset($info['projects'][$subtree_name])) {
+      $project_info = $info['projects'][$subtree_name];
+    }
+    // If it's not a "project" it's a "library".
+    elseif (isset($info['libraries'][$subtree_name])) {
+      $project_info = $info['libraries'][$subtree_name];
+    }
+    // Can't find info in available make files.
+    else {
+      drush_log(dt("Could not find info in make file(s) about this project: !name",
+        array('!name' => $subtree_name)), 'warning');
+    }
+
+    // Get tagged version of project from make file, if available.
+    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $info['core']);
+
+    // Get git commit ID to merge, if enough info is available.
+    $id = _drushsubtree_get_project_id($subtree_name, $project_info,
+                                       $details, $tag);
+
+    // Run subtree developer checks?
+    if (drush_get_option('subtree-dev-checks', FALSE)) {
+      $checks_pass = _drushsubtree_dev_checks($name, $tag, $id, $details);
+      if (!$checks_pass) {
+        // User canceled build.
+        drush_log(dt('Drush Subtree: Canceling build.'), 'error');
+        // Returning anything cancels the build.
+        return 'Drush Subtree: Canceling build.';
+      }
     }
 
     // Instantiate new commander to generate subtree commands.
@@ -765,27 +802,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       $subtree_commands[] = $subtree_pull;
     }
 
-    // Get project info.
-    $project_info = array();
-    if (isset($info['projects'][$subtree_name])) {
-      $project_info = $info['projects'][$subtree_name];
-    }
-    // If it's not a "project" it's a "library".
-    elseif (isset($info['libraries'][$subtree_name])) {
-      $project_info = $info['libraries'][$subtree_name];
-    }
-    // Can't find info in available make files.
-    else {
-      drush_log(dt("Could not find info in make file(s) about this project: !name",
-        array('!name' => $subtree_name)), 'warning');
-    }
-
     // Use git subtree merge to check out a particular version of a project.
-    // First get the git commit ID to merge to using info from make files.
-    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $info['core']);
-
-    $id = _drushsubtree_get_project_id($subtree_name, $project_info,
-                                       $details, $tag);
     if ($id) {
       $subtree_commands[] = $subtree->merge($id, $tag);
     }
@@ -808,7 +825,59 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   $commands->prebuild = array_merge($subtree_commands, $commands->prebuild);
 
   // No return necessary. Commands added to $command object are available to
-  // buildmaster_build command now.
+  // buildmaster_build command now. Note: Returning anything actually triggers
+  // Build Manger abort.
+}
+
+/**
+ * Run helpful checks for developers during hook_buildmanager_build().
+ *
+ * Look for indications that projects may not been synced properly. Then prompt
+ * developer with information about what we found and tips on resolving the
+ * situation.
+ *
+ * @param string $name
+ * @param string $tag
+ * @param string $id
+ * @param string $details
+ */
+function _drushsubtree_dev_checks($name, $tag, $id, $details) {
+  // Assume we're proceeding with build unless checks prove otherwise.
+  $proceed_with_build = TRUE;
+
+  // Set vars for subtree check prompts.
+  $check_vars = array(
+    '@name' => $name,
+    '@tag' => $tag,
+    '@id' => $id,
+    '@uri' => $details['uri'],
+    '@branch' => $details['branch'],
+  );
+
+  // There's a tagged version of this project specified in the make file.
+  if ($tag) {
+    // Does local copy of subtree project match the version in the make file?
+    // If yes, proceed. If no, prompt user with warnings and suggestions.
+    // @TODO Do validation check.
+    $message = dt("Your local copy of @name does not match @tag (specified in your make file). If you intend to pull in updates from outside your site repo with @tag, proceed. If your local version is ahead of @tag and you have been doing development inside your site repo, you should probably stop, push changes to @uri, tag a new version, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @tag. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+    $proceed_with_build = drush_confirm($message);
+  }
+  // There's no tagged version specified in the make file, but a commit ID is
+  // specified.
+  elseif ($id && !$tag) {
+    // @todo
+    $message = dt("Your local copy of @name does not match @id (specified in your make file). If you intend to pull in updates from outside your site repo with @id, proceed. If your local version is ahead of @id and you have been doing development inside your site repo, you should probably stop, push changes to @uri, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @id. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+    $proceed_with_build = drush_confirm($message);
+  }
+  // There's no tagged version for this project in the make file.
+  elseif (!$id && !$tag) {
+    // Do local and remote HEAD point at same commit? If yes, proceed. If no,
+    // prompt user with warnings and suggestions.
+    $message = dt("The version of @name in your local site repo does not match HEAD on @branch (@uri). Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+    $proceed_with_build = drush_confirm($message);
+  }
+
+  return $proceed_with_build;
 }
 
 /**
@@ -840,9 +909,8 @@ function drushsubtree_buildmanager_build_options() {
     'no-subtree-updates' => array(
       'description' => 'Do add/pull/merge subtrees in buildmanager config.',
     ),
-    // @todo
-    're-add' => array(
-      'description' => '@todo Remove and re-add comma separated list of subtree(s).',
+    'subtree-dev-checks' => array(
+      'description' => "Recommended for developers doing a rebuild after making changes to included contrib projects. Drush Subtree will run checks like: comparing included subtree projects with corresponding the versions in your make file, comparing local and remote HEAD. If things are out of sync, you will be notified, given suggestions about steps to take, and receive a prompt to optionally cancel the build.",
     ),
   );
 }
