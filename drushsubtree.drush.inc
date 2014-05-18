@@ -259,7 +259,7 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
 
   $head = drushsubtree_subtree_get_head($subtree_name, $details);
   $result = "subtree: {$subtree_name}\nHEAD\t{$head}";
-  
+
   // Check for matching tag.
   if ($tag = _drush_subtree_find_tag($subtree_name, $head, $details)) {
     $result .= "\t{$tag}";
@@ -373,7 +373,7 @@ function _drush_subtree_find_tag($name, $id, $details) {
   // Check remote tags for matching commit ID.
   foreach(drushsubtree_list_remote_tags($name, $details) as $tag => $tag_id) {
     if ($id == $tag_id) {
-      $matching_tag = $tag; 
+      $matching_tag = $tag;
     }
   }
 
@@ -765,7 +765,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     }
     // Can't find info in available make files.
     else {
-      drush_log(dt("Could not find info in make file(s) about this project: !name", 
+      drush_log(dt("Could not find info in make file(s) about this project: !name",
         array('!name' => $subtree_name)), 'warning');
     }
 
@@ -1062,6 +1062,11 @@ function drush_drushsubtree_subtree_push($name) {
   // Get name if not passed as argument.
   if (!$name) {
     $name = _drushsubtree_get_name($config);
+  }
+
+  if (!$properties = $config['subtrees'][$subtree_name]) {
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+      array('!subtree' => $subtree_name, '!config_file' => $config_file));
   }
 
   $properties = $config['subtrees'][$name];
