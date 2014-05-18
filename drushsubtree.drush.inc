@@ -204,6 +204,22 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
+  $items['subtree-compare-tag'] = array(
+    'description' => "Compare local subtree HEAD with tag in make file.",
+    'arguments' => array(
+      'project_name' => '',
+    ),
+    'examples' => array(
+      'drush subtree-compare-tags' => 'Use prompt to select project',
+      'drush subtree-compare-tags <my-project>' => '',
+      'drush sct <my-project>' => '',
+    ),
+    'aliases' => array('sct'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
   return $items;
 }
 
@@ -258,10 +274,10 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
   }
 
   $head = drushsubtree_subtree_get_head($subtree_name, $details);
-  $result = "subtree: {$subtree_name}\nHEAD\t{$head}";
+  $result = "{$subtree_name}\tHEAD\t{$head}";
 
   // Check for matching tag.
-  if ($tag = _drush_subtree_find_tag($subtree_name, $head, $details)) {
+  if ($tag = _drushsubtree_match_tag($subtree_name, $head, $details)) {
     $result .= "\t{$tag}";
   }
 
@@ -366,12 +382,12 @@ function drushsubtree_get_remote_head($uri, $branch) {
  * @return string|bool
  *   Tag name, false if not available.
  */
-function _drush_subtree_find_tag($name, $id, $details) {
+function _drushsubtree_match_tag($name, $id, $details) {
   // Assume there's no match unless we find one.
   $matching_tag = FALSE;
 
   // Check remote tags for matching commit ID.
-  foreach(drushsubtree_list_remote_tags($name, $details) as $tag => $tag_id) {
+  foreach (drushsubtree_list_remote_tags($name, $details) as $tag => $tag_id) {
     if ($id == $tag_id) {
       $matching_tag = $tag;
     }
@@ -1287,4 +1303,84 @@ function drushsubtree_heads_match($name, $properties, $log = FALSE) {
   }
 
   return ($local_head == $remote_head) ? TRUE : FALSE;
+}
+
+/**
+ * Callback for subtree-compare-tag.
+ */
+function drush_drushsubtree_subtree_compare_tag($name = '') {
+  // Get buildmanager config.
+  $config = _drushsubtree_get_config();
+
+  // Get name if not passed as argument.
+  if (!$name) {
+    $name = _drushsubtree_get_name($config);
+  }
+
+  if (!$details = $config['subtrees'][$name]) {
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+      array('!subtree' => $name, '!config_file' => $config_file));
+  }
+
+  if (drushsubtree_compare_tag($name, $config, TRUE)) {
+    drush_log(dt('Versions match'), 'ok');
+  }
+  else {
+    drush_log(dt('Versions do not match'), 'warning');
+  }
+}
+
+/**
+ * Compare local subtree to tagged version specified by make file.
+ *
+ * @param string $name
+ *   Project name.
+ *
+ * @param array $config
+ *   Buildmanager config.
+ *
+ * @param bool $log
+ *   Log details about comparison.
+ *
+ * @return bool
+ *   TRUE, match. FALSE, not matching.
+ */
+function drushsubtree_compare_tag($name, $config, $log = FALSE) {
+  // Assume false until we prove true.
+  $result = FALSE;
+
+  // Get project info from available make file(s).
+  // Note: This function only has access to make files known to build.make. Make
+  // files added and discovered at runtime are not taken into consideration
+  // here.
+  $project_info = buildmanager_get_project_info($name, $config);
+  $core = buildmanager_get_core_version($config);
+  $make_tag = _drushsubtree_get_project_tag($name, $project_info, $core);
+  $build_file = $config['build']['build_file'];
+
+  // Get local commit ID and corresponding tag from remote, if one exists.
+  $details = $config['subtrees'][$name];
+  $id = drushsubtree_subtree_get_head($name, $details);
+  $project_tag = _drushsubtree_match_tag($name, $id, $details);
+
+  if ($log) {
+    $not_found = dt("No Tag Found");
+    $project_tag = ($project_tag) ? $project_tag : $not_found;
+    $make_tag = ($make_tag) ? $make_tag : $not_found;
+    drush_log(dt("@project_tag:\tlocal version of @name, @id", array(
+      '@project_tag' => $project_tag,
+      '@name' => $name,
+      '@id' => $id)), 'ok');
+    drush_log(dt("@make_tag:\t@build_file version of @name", array(
+      '@make_tag' => $make_tag,
+      '@build_file' => $build_file,
+      '@name' => $name)), 'ok');
+  }
+
+  // Compare tags.
+  if ($make_tag == $project_tag && $make_tag != dt('Not Found')) {
+    $result = TRUE;
+  }
+
+  return $result;
 }
