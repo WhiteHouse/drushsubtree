@@ -188,6 +188,22 @@ function drushsubtree_drush_command() {
     'drush dependencies' => 'buildmanager',
   );
 
+  $items['subtree-compare-heads'] = array(
+    'description' => "Compare local subtree HEAD with remote HEAD.",
+    'arguments' => array(
+      'project_name' => '',
+    ),
+    'examples' => array(
+      'drush subtree-compare-heads' => 'Use prompt to select project',
+      'drush subtree-compare-heads <my-project>' => '',
+      'drush sch <my-project>' => '',
+    ),
+    'aliases' => array('sch'),
+    // No bootstrap at all.
+    'bootstrap' => DRUSH_BOOTSTRAP_DRUSH,
+    'drush dependencies' => 'buildmanager',
+  );
+
   return $items;
 }
 
@@ -241,6 +257,31 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
       array('!subtree' => $subtree_name, '!config_file' => $config_file));
   }
 
+  $head = drushsubtree_subtree_get_head($subtree_name, $details);
+  $result = "subtree: {$subtree_name}\nHEAD\t{$head}";
+  
+  // Check for matching tag.
+  if ($tag = _drush_subtree_find_tag($subtree_name, $head, $details)) {
+    $result .= "\t{$tag}";
+  }
+
+  // Print result.
+  drush_print($result);
+}
+
+/**
+ * Get HEAD for local subtree project.
+ *
+ * @param string $subtree_name
+ *   Project name.
+ *
+ * @param array $details
+ *   Project details from buildmanager config.
+ *
+ * @return string
+ *   Commit ID for HEAD
+ */
+function drushsubtree_subtree_get_head($subtree_name, $details) {
   // Instantiated subtree command generator.
   $subtree = new SubtreeCommander($subtree_name, $details);
 
@@ -252,15 +293,8 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
   }
   // Retrieve HEAD.
   $head = $output[0];
-  $result = "subtree: {$subtree_name}\nHEAD\t{$head}";
-  
-  // Check for matching tag.
-  if ($tag = _drush_subtree_find_tag($subtree_name, $head, $details)) {
-    $result .= "\t{$tag}";
-  }
 
-  // Print result.
-  drush_print($result);
+  return $head;
 }
 
 /**
@@ -1196,4 +1230,56 @@ function drush_drushsubtree_subtree_get_info($name = '') {
 
   $info[$name] = $config['subtrees'][$name];
   drush_print("\n" . drush_format($info, NULL, 'yaml'));
+}
+
+/**
+ * Callback for subtree-compare-heads.
+ */
+function drush_drushsubtree_subtree_compare_heads($name = '') {
+  // Get buildmanager config.
+  $config = _drushsubtree_get_config();
+
+  // Get name if not passed as argument.
+  if (!$name) {
+    $name = _drushsubtree_get_name($config);
+  }
+
+  if (!$properties = $config['subtrees'][$name]) {
+    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
+      array('!subtree' => $name, '!config_file' => $config_file));
+  }
+
+  if (drushsubtree_heads_match($name, $properties, TRUE)) {
+    drush_print(dt("Local and remote versions of @name match.", array('@name' => $name)));
+  }
+  else {
+    drush_print(dt("Local and remote versions of @name do NOT match.", array('@name' => $name)));
+  }
+}
+
+/**
+ * Compare heads and return true/false for match.
+ *
+ * @param string $name
+ *   Project name.
+ *
+ * @param array $properties
+ *   Project details from buildmanager config.
+ *
+ * @param bool $log
+ *   Log details about comparison.
+ *
+ * @return bool
+ *   TRUE, match. FALSE, not matching.
+ */
+function drushsubtree_heads_match($name, $properties, $log = FALSE) {
+  $local_head = drushsubtree_subtree_get_head($name, $properties);
+  $remote_head = drushsubtree_get_remote_head($properties['uri'], $properties['branch']);
+
+  if ($log) {
+    drush_log("{$name}\tlocal HEAD\t{$local_head}", 'ok');
+    drush_log("{$name}\tremote HEAD\t{$remote_head}", 'ok');
+  }
+
+  return ($local_head == $remote_head) ? TRUE : FALSE;
 }
