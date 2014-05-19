@@ -1168,7 +1168,7 @@ function drush_drushsubtree_subtree_push($name) {
     $name = _drushsubtree_get_name($config);
   }
 
-  if (!$properties = $config['subtrees'][$subtree_name]) {
+  if (!$properties = $config['subtrees'][$name]) {
     return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
       array('!subtree' => $subtree_name, '!config_file' => $config_file));
   }
