@@ -772,7 +772,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
 
     // Run subtree developer checks?
     if (drush_get_option('subtree-dev-checks', FALSE)) {
-      $checks_pass = _drushsubtree_dev_checks($name, $tag, $id, $details);
+      $checks_pass = _drushsubtree_dev_checks($subtree_name, $tag, $id, $config);
       if (!$checks_pass) {
         // User canceled build.
         drush_log(dt('Drush Subtree: Canceling build.'), 'error');
@@ -837,15 +837,26 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
  * situation.
  *
  * @param string $name
+ *   Name of subtree project.
+ *
  * @param string $tag
+ *   Tag specified by [download][tag], [tag], or [version] in make file.
+ *
  * @param string $id
- * @param string $details
+ *   Git commit ID specified by make file, or corresponding to tag in make file.
+ *
+ * @param string $config
+ *   Build Manager config passed in by Build Manager at runtime.
+ *
+ * @return bool
+ *   TRUE, checks pass, recommend proceeding with build. FALSE, checks failed.
  */
-function _drushsubtree_dev_checks($name, $tag, $id, $details) {
+function _drushsubtree_dev_checks($name, $tag, $id, $config) {
   // Assume we're proceeding with build unless checks prove otherwise.
   $proceed_with_build = TRUE;
 
   // Set vars for subtree check prompts.
+  $details = $config['subtrees'][$name];
   $check_vars = array(
     '@name' => $name,
     '@tag' => $tag,
@@ -858,23 +869,37 @@ function _drushsubtree_dev_checks($name, $tag, $id, $details) {
   if ($tag) {
     // Does local copy of subtree project match the version in the make file?
     // If yes, proceed. If no, prompt user with warnings and suggestions.
-    // @TODO Do validation check.
-    $message = dt("Your local copy of @name does not match @tag (specified in your make file). If you intend to pull in updates from outside your site repo with @tag, proceed. If your local version is ahead of @tag and you have been doing development inside your site repo, you should probably stop, push changes to @uri, tag a new version, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @tag. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
-    $proceed_with_build = drush_confirm($message);
+    if (!drushsubtree_compare_tag($name, $config, TRUE)) {
+      $message = dt("Your local copy of @name does not match @tag (specified in your make file). If you intend to pull in updates from outside your site repo with @tag, proceed. If your local version is ahead of @tag and you have been doing development inside your site repo, you should probably stop, push changes to @uri, tag a new version, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @tag. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+      $proceed_with_build = drush_confirm($message);
+    }
   }
+
   // There's no tagged version specified in the make file, but a commit ID is
   // specified.
   elseif ($id && !$tag) {
-    // @todo
-    $message = dt("Your local copy of @name does not match @id (specified in your make file). If you intend to pull in updates from outside your site repo with @id, proceed. If your local version is ahead of @id and you have been doing development inside your site repo, you should probably stop, push changes to @uri, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @id. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
-    $proceed_with_build = drush_confirm($message);
+    // Do HEAD and the ID in the make file match? If yes, proceed. If no, notify
+    // user and confirm before proceeding.
+    $head = drushsubtree_subtree_get_head($name, $details);
+    drush_log("{$name}\t{$head}\tlocal HEAD", 'ok');
+    drush_log("{$name}\t{$id}\trevision specified by make file", 'ok');
+    if ($head == $id) {
+      drush_log("{$name}\tversions match", 'ok');
+    }
+    else {
+      $message = dt("Your local copy of @name does not match the download revision (commit ID) specified in your make file. If you intend to pull in updates from outside your site repo with @id, proceed. If your local version is ahead of @id and you have been doing development inside your site repo, you should probably stop, push changes to @uri, update your make file, then rebuild. Otherwise, proceeding will be like downgrading to @id. Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+      $proceed_with_build = drush_confirm($message);
+    }
   }
+
   // There's no tagged version for this project in the make file.
   elseif (!$id && !$tag) {
     // Do local and remote HEAD point at same commit? If yes, proceed. If no,
     // prompt user with warnings and suggestions.
-    $message = dt("The version of @name in your local site repo does not match HEAD on @branch (@uri). Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
-    $proceed_with_build = drush_confirm($message);
+    if (!drushsubtree_heads_match($name, $details, TRUE)) {
+      $message = dt("The version of @name in your local site repo does not match HEAD on @branch (@uri). Do you want to proceed with this build? (To rebuild without interrupting local development on subtree projects, cancel and re-try with the --no-subtree-updates flag.)", $check_vars);
+      $proceed_with_build = drush_confirm($message);
+    }
   }
 
   return $proceed_with_build;
@@ -910,7 +935,7 @@ function drushsubtree_buildmanager_build_options() {
       'description' => 'Do add/pull/merge subtrees in buildmanager config.',
     ),
     'subtree-dev-checks' => array(
-      'description' => "Recommended for developers doing a rebuild after making changes to included contrib projects. Drush Subtree will run checks like: comparing included subtree projects with corresponding the versions in your make file, comparing local and remote HEAD. If things are out of sync, you will be notified, given suggestions about steps to take, and receive a prompt to optionally cancel the build.",
+      'description' => "Recommended for developers doing a rebuild after making changes to included contrib projects. Drush Subtree will run checks like: comparing included subtree projects with corresponding the versions in your make file, comparing local and remote HEAD. If things are out of sync, you will be notified, given suggestions about steps to take, and receive a prompt to optionally cancel the build. Checks run before any pre/postbuild commands. To run checks ONLY, run buildmanager-build with --simulate flag.",
     ),
   );
 }
