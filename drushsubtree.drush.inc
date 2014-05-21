@@ -683,7 +683,7 @@ function _drushsubtree_subtree_add_symlink($name, $path) {
   $source .= $prefix;
 
   // Parent directory for symlink.
-  $pos = strpos($path, $name);
+  $pos = strrpos($path, $name);
   $parent_directory = substr($path, 0, $pos);
 
   // Remove the directory. Replace it with a symlink.
