@@ -797,6 +797,16 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
              array('!subtree_name' => $subtree_name)), 'ok');
       $subtree_commands[] = $subtree_add;
     }
+    // Check if subtree project already matches tag in make file.
+    elseif (drushsubtree_compare_tag($subtree_name, $config)) {
+      // Skip this pull/merge. It's extraneous noise in the commit history.
+      continue;
+    }
+    // Check if subtree project HEAD already matches revision in make file.
+    elseif ($id == drushsubtree_subtree_get_head($subtree_name, $details)) {
+      // Skip this pull/merge. It's extraneous noise in the commit history.
+      continue;
+    }
     // Otherwise, pull in any updates.
     elseif ($subtree_pull = $subtree->pull()) {
       $subtree_commands[] = $subtree_pull;
