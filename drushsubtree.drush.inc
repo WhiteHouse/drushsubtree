@@ -726,6 +726,9 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   // Get symlink commands to be run after `drush make`.
   $symlink_commands = array();
 
+  // Get drush options.
+  $fast_but_noisy = drush_get_option('fast-but-noisy', FALSE);
+
   // Loop through all subtrees described in buildmanager config to add prebuild
   // and postbuild commands.
   // Prebuild:
@@ -771,6 +774,9 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
                                        $details, $tag);
 
     // Run subtree developer checks?
+    // @todo Keep track of results, project-by-project. Now that we run checks
+    // by default to prevent adding noise to the commit history, it's a waste if
+    // we end up running the same time-consuming checks twice in a single run.
     if (drush_get_option('subtree-dev-checks', FALSE)) {
       $checks_pass = _drushsubtree_dev_checks($subtree_name, $tag, $id, $config);
       if (!$checks_pass) {
@@ -798,7 +804,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       $subtree_commands[] = $subtree_add;
     }
     // Check if subtree project already matches tag in make file.
-    elseif (drushsubtree_compare_tag($subtree_name, $config)) {
+    elseif (!$fast_but_noisy && drushsubtree_compare_tag($subtree_name, $config)) {
       // Skip this pull/merge. It's extraneous noise in the commit history.
       drush_log(dt('Skipping subtree pull/merge on @name. Project HEAD already points to tag specified by @build.', array(
         '@name' => $subtree_name,
@@ -807,7 +813,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       continue;
     }
     // Check if subtree project HEAD already matches revision in make file.
-    elseif ($id == drushsubtree_subtree_get_head($subtree_name, $details)) {
+    elseif (!$fast_but_noisy && $id == drushsubtree_subtree_get_head($subtree_name, $details)) {
       // Skip this pull/merge. It's extraneous noise in the commit history.
       drush_log(dt('Skipping subtree pull/merge on @name. Project HEAD already points to revision specified by @build.', array(
         '@name' => $subtree_name,
@@ -954,6 +960,9 @@ function drushsubtree_buildmanager_build_options() {
     ),
     'subtree-dev-checks' => array(
       'description' => "Recommended for developers doing a rebuild after making changes to included contrib projects. Drush Subtree will run checks like: comparing included subtree projects with corresponding the versions in your make file, comparing local and remote HEAD. If things are out of sync, you will be notified, given suggestions about steps to take, and receive a prompt to optionally cancel the build. Checks run before any pre/postbuild commands. To run checks ONLY, run buildmanager-build with --simulate flag.",
+    ),
+    'fast-but-noisy' => array(
+      'description' => "Don't check to see if subtree projects already match versions in make files. Simply run git subtree pull and merge on all subtree projects. This is faster, but it adds some extraneous noise to the commit history",
     ),
   );
 }
