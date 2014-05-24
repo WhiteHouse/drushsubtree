@@ -818,7 +818,8 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       $subtree_commands[] = $subtree_add;
     }
     // Check if subtree project already matches tag in make file.
-    elseif (!$fast_but_noisy && drushsubtree_compare_tag($subtree_name, $config, TRUE)) {
+    // Only run this if we were able to find a tag for this project.
+    elseif ($tag && !$fast_but_noisy && drushsubtree_compare_tag($subtree_name, $config, TRUE)) {
       // Skip this pull/merge. It's extraneous noise in the commit history.
       drush_log(dt('Skipping subtree pull/merge on @name. Project HEAD already points to tag specified by @build.', array(
         '@name' => $subtree_name,
@@ -827,7 +828,8 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       continue;
     }
     // Check if subtree project HEAD already matches revision in make file.
-    elseif (!$fast_but_noisy && $id == drushsubtree_subtree_get_head($subtree_name, $details)) {
+    // Only run this if we were NOT able to find a tag for this project.
+    elseif (!$tag && !$fast_but_noisy && $id == drushsubtree_subtree_get_head($subtree_name, $details)) {
       // Skip this pull/merge. It's extraneous noise in the commit history.
       drush_log(dt('Skipping subtree pull/merge on @name. Project HEAD already points to revision specified by @build.', array(
         '@name' => $subtree_name,
