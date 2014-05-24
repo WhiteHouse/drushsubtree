@@ -762,8 +762,9 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     }
     // Can't find info in available make files.
     else {
-      drush_log(dt("Could not find info in make file(s) about this project: !name",
-        array('!name' => $subtree_name)), 'warning');
+      drush_log(dt("Could not find info in make file(s) about this project: !name", array(
+        '!name' => $subtree_name,
+      )), 'warning');
     }
 
     // Get tagged version of project from make file, if available.
@@ -799,8 +800,9 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     // tree (like drush make), otherwise the subtree add/pull/merge will fail.
     // First, add git subtree if it doesn't already exist.
     if ($subtree_add = $subtree->add(TRUE)) {
-      drush_log(dt('Preparing to add subtree: !subtree_name',
-             array('!subtree_name' => $subtree_name)), 'ok');
+      drush_log(dt('Preparing to add subtree: !subtree_name', array(
+        '!subtree_name' => $subtree_name,
+      )), 'ok');
       $subtree_commands[] = $subtree_add;
     }
     // Check if subtree project already matches tag in make file.
