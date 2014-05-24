@@ -379,10 +379,14 @@ function drushsubtree_get_remote_head($uri, $branch) {
  * @param array $details
  *   Subtree project details from buildmanager config file.
  *
+ * @param bool $simplify
+ *   TRUE, trim annotated tags so tags like this 7.x-1.4^{} returns 7.x-1.4.
+ *   FALSE, return exact tag name matched.
+ *
  * @return string|bool
  *   Tag name, false if not available.
  */
-function _drushsubtree_match_tag($name, $id, $details) {
+function _drushsubtree_match_tag($name, $id, $details, $simplify = TRUE) {
   // Assume there's no match unless we find one.
   $matching_tag = FALSE;
 
@@ -390,6 +394,14 @@ function _drushsubtree_match_tag($name, $id, $details) {
   foreach (drushsubtree_list_remote_tags($name, $details) as $tag => $tag_id) {
     if ($id == $tag_id) {
       $matching_tag = $tag;
+    }
+  }
+
+  // If it's an annotated tag, trim the ^{} at the end.
+  if ($simplify) {
+    if (substr($matching_tag, -3) == '^{}') {
+      // It's an annotated tag.
+      $matching_tag = substr($matching_tag, 0, strpos($matching_tag, '^{}'));
     }
   }
 
@@ -806,7 +818,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       $subtree_commands[] = $subtree_add;
     }
     // Check if subtree project already matches tag in make file.
-    elseif (!$fast_but_noisy && drushsubtree_compare_tag($subtree_name, $config)) {
+    elseif (!$fast_but_noisy && drushsubtree_compare_tag($subtree_name, $config, TRUE)) {
       // Skip this pull/merge. It's extraneous noise in the commit history.
       drush_log(dt('Skipping subtree pull/merge on @name. Project HEAD already points to tag specified by @build.', array(
         '@name' => $subtree_name,
