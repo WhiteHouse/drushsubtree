@@ -322,9 +322,9 @@ function drush_drushsubtree_subtree_get_remote_head($subtree_name) {
   // Get config.
   $config = _drushsubtree_get_config();
   if (!$details = $config['subtrees'][$subtree_name]) {
-      return drush_set_error(dt('No subtree config available for !subtree'),
-          array('!subtree' => $subtree_name)
-      );
+    return drush_set_error(dt('No subtree config available for !subtree'),
+      array('!subtree' => $subtree_name)
+    );
   }
 
   // Get HEAD.
@@ -517,15 +517,16 @@ function _drushsubtree_get_project_id($subtree_name, $project_info, $details, $t
     if (!$tags) {
       // Attempt to retrieved tags from remote failed.
       drush_log(dt("Commit IDs for !name tags could not be retrieved from !remote.\nTo explicitly designate which commit ID to check out, you can add this to your makefile (replace abc1234 with a real commit ID):\n\tprojects[!name][download][revision] = abc1234",
-        array('!name' => $subtree_name, '!remote' => $details['uri'])), 'warning');
+          array('!name' => $subtree_name, '!remote' => $details['uri'])
+      ), 'warning');
     }
-  }
-  elseif ($tags && !$tag) {
-    // Tags were retrieved successfully. No tag was passed in. See if we can get
-    // tag/version from make file(s).
-    $config = _drushsubtree_get_config();
-    $core = buildmanager_get_core_version($config);
-    $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $core);
+    elseif ($tags && !$tag) {
+      // Tags were retrieved successfully. No tag was passed in. See if we can
+      // get tag/version from make file(s).
+      $config = _drushsubtree_get_config();
+      $core = buildmanager_get_core_version($config);
+      $tag = _drushsubtree_get_project_tag($subtree_name, $project_info, $core);
+    }
   }
 
   // If we've got an array of IDs keyed by tags ($tags) and a tag to look up
