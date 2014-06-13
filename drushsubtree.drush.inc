@@ -250,8 +250,9 @@ function drush_drushsubtree_subtree_get_tags($subtree_name) {
   // Get config.
   $config = _drushsubtree_get_config();
   if (!$details = $config['subtrees'][$subtree_name]) {
-    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
-      array('!subtree' => $subtree_name, '!config_file' => $config_file));
+    return drush_set_error(dt('No subtree config available for !subtree'),
+      array('!subtree' => $subtree_name)
+    );
   }
 
   // Look up tags from remote specified in $details.
@@ -269,8 +270,9 @@ function drush_drushsubtree_subtree_get_head($subtree_name) {
   // Get config.
   $config = _drushsubtree_get_config();
   if (!$details = $config['subtrees'][$subtree_name]) {
-    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
-      array('!subtree' => $subtree_name, '!config_file' => $config_file));
+    return drush_set_error(dt('No subtree config available for !subtree'),
+      array('!subtree' => $subtree_name)
+    );
   }
 
   $head = drushsubtree_subtree_get_head($subtree_name, $details);
@@ -320,8 +322,9 @@ function drush_drushsubtree_subtree_get_remote_head($subtree_name) {
   // Get config.
   $config = _drushsubtree_get_config();
   if (!$details = $config['subtrees'][$subtree_name]) {
-    return drush_set_error(dt('No subtree config available for !subtree in !config_file'),
-      array('!subtree' => $subtree_name, '!config_file' => $config_file));
+      return drush_set_error(dt('No subtree config available for !subtree'),
+          array('!subtree' => $subtree_name)
+      );
   }
 
   // Get HEAD.
