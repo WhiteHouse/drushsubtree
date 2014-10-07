@@ -205,7 +205,7 @@ function drushsubtree_drush_command() {
   );
 
   $items['subtree-compare-tag'] = array(
-    'description' => "Compare local subtree HEAD with tag in make file.",
+    'description' => "Compare local subtree HEAD with tag or commit ID in make file.",
     'arguments' => array(
       'project_name' => '',
     ),
