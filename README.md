@@ -215,7 +215,7 @@ should be aware of when working with subtrees.
 
 When you (re)build a site codebase with buildmanager-build, Drush
 Subtree only finds version information (release tags) available in your toplevel
-make file (e.g. build.make) or in a make file explicitly incuded in the toplevel
+make file (e.g. build.make) or in a make file explicitly included in the toplevel
 make file. Drush Subtree does NOT automatically manage versions of subtree
 projects discovered by Drush Make at runtime.
 
