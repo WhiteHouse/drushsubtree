@@ -997,7 +997,7 @@ function drushsubtree_buildmanager_build_options() {
  * param array $config
  *   See hook_buildmanager_configure.
  *
- * pararm bool $prompt
+ * param bool $prompt
  *   Ask user if project includes subtrees.
  */
 function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
