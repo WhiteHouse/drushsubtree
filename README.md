@@ -29,7 +29,7 @@ inside a parent repo and by providing integration with Drush's Build
 Manager extension for automating builds and using subtrees with Drush Make.
 
   - Use Build Manager's interactive prompt to set your site up with Git subtrees
-    for projects you maintain outsite the parent site repository.
+    for projects you maintain outside the parent site repository.
 
   - Do development inside whatever site repo you're actively working in,
     then push commits out of your site repo up to drupal.org or (whatever
