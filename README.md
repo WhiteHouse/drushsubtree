@@ -244,7 +244,7 @@ to run this command:
 _Issue #2_: If you maintain an install profile and a contrib project required by
 it, a common directory structure is to include the contrib project _inside_ the
 profile for example: docroot/profiles/my-profile/modules/contrib/my-module.
-Subtrees inside subtrees don't work (well, technically they "work", but it's a nasty mess of a sitution
+Subtrees inside subtrees don't work (well, technically they "work", but it's a nasty mess of a situation
 and Drush Subtree does not support it). You have a few alternatives:
 
 A. Rather than include multiple make files in your distro, put everything in
