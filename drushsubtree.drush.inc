@@ -1131,7 +1131,7 @@ function drush_drushsubtree_subtree_checkout($name, $ref) {
   }
 
   // Determine if $ref is a tag or a commit ID. (This check is pretty
-  // unsophistocated. If $ref is 40 characters, assume it's a commit ID,
+  // unsophisticated. If $ref is 40 characters, assume it's a commit ID,
   // otherwise it's a tag.) Then get/set $id so we can do a subtree merge to
   // "checkout" the desired tag/id.
   (strlen($ref) == 40) ? $id = $ref : $tag = $ref;
