@@ -808,7 +808,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     $subtree = new SubtreeCommander($subtree_name, $details);
 
     // Collect commands as $subtree_commands, then add them all to the
-    // beguinning of $commands->prebuild array.
+    // beginning of $commands->prebuild array.
     // It's important these run before drush make for
     // two reasons: (1) Incase a project's build file includes a make file in a
     // subtree project. This will ensure the updated make file is included in
@@ -865,7 +865,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   // doesn't get polluted with projects being re-added and re-removed each time.
   $commands->postbuild = array_merge($symlink_commands, $commands->postbuild);
 
-  // Now add all subtree_commands to begining of prebuild command list.
+  // Now add all subtree_commands to beginning of prebuild command list.
   $commands->prebuild = array_merge($subtree_commands, $commands->prebuild);
 
   // No return necessary. Commands added to $command object are available to
