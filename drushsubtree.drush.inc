@@ -1301,7 +1301,7 @@ function drushsubtree_buildmanager_parse_error_output($output) {
 }
 
 /**
- * Parse exec() $output for known problems. Provide helpul tips.
+ * Parse exec() $output for known problems. Provide helpful tips.
  *
  * @param array $output
  *   Output, line by line, returned by exec().
@@ -1328,7 +1328,7 @@ function drushsubtree_parse_error_output($output, $return_generic = TRUE) {
 }
 
 /**
- * Parse a line of error output for known problems. Provide helpul tips.
+ * Parse a line of error output for known problems. Provide helpful tips.
  *
  * @param string $line
  *   Individual line of $output. @see drushsubtree_parse_error_output.
