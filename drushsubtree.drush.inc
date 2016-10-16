@@ -808,7 +808,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
     $subtree = new SubtreeCommander($subtree_name, $details);
 
     // Collect commands as $subtree_commands, then add them all to the
-    // beguinning of $commands->prebuild array.
+    // beginning of $commands->prebuild array.
     // It's important these run before drush make for
     // two reasons: (1) Incase a project's build file includes a make file in a
     // subtree project. This will ensure the updated make file is included in
@@ -857,7 +857,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
       drush_log(dt("No commit ID specified for !project (if a tag was specified in a make file, the corresponding commit ID could not be retrieved). Your install will run on the tip of whatever branch you checked out. (Subtrees do not fallback to the latest recommended release on drupal.org when no version is specified.)", array('!project' => $subtree_name)), 'warning');
     }
 
-    // End loop thorugh subtrees.
+    // End loop through subtrees.
   }
 
   // Add symlink commands after drush make but before other commands, incase any
@@ -865,7 +865,7 @@ function drushsubtree_buildmanager_build($info, $config, $commands) {
   // doesn't get polluted with projects being re-added and re-removed each time.
   $commands->postbuild = array_merge($symlink_commands, $commands->postbuild);
 
-  // Now add all subtree_commands to begining of prebuild command list.
+  // Now add all subtree_commands to beginning of prebuild command list.
   $commands->prebuild = array_merge($subtree_commands, $commands->prebuild);
 
   // No return necessary. Commands added to $command object are available to
@@ -997,7 +997,7 @@ function drushsubtree_buildmanager_build_options() {
  * param array $config
  *   See hook_buildmanager_configure.
  *
- * pararm bool $prompt
+ * param bool $prompt
  *   Ask user if project includes subtrees.
  */
 function drushsubtree_buildmanager_configure($config, $prompt = TRUE) {
@@ -1131,7 +1131,7 @@ function drush_drushsubtree_subtree_checkout($name, $ref) {
   }
 
   // Determine if $ref is a tag or a commit ID. (This check is pretty
-  // unsophistocated. If $ref is 40 characters, assume it's a commit ID,
+  // unsophisticated. If $ref is 40 characters, assume it's a commit ID,
   // otherwise it's a tag.) Then get/set $id so we can do a subtree merge to
   // "checkout" the desired tag/id.
   (strlen($ref) == 40) ? $id = $ref : $tag = $ref;
@@ -1301,7 +1301,7 @@ function drushsubtree_buildmanager_parse_error_output($output) {
 }
 
 /**
- * Parse exec() $output for known problems. Provide helpul tips.
+ * Parse exec() $output for known problems. Provide helpful tips.
  *
  * @param array $output
  *   Output, line by line, returned by exec().
@@ -1328,7 +1328,7 @@ function drushsubtree_parse_error_output($output, $return_generic = TRUE) {
 }
 
 /**
- * Parse a line of error output for known problems. Provide helpul tips.
+ * Parse a line of error output for known problems. Provide helpful tips.
  *
  * @param string $line
  *   Individual line of $output. @see drushsubtree_parse_error_output.

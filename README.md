@@ -29,7 +29,7 @@ inside a parent repo and by providing integration with Drush's Build
 Manager extension for automating builds and using subtrees with Drush Make.
 
   - Use Build Manager's interactive prompt to set your site up with Git subtrees
-    for projects you maintain outsite the parent site repository.
+    for projects you maintain outside the parent site repository.
 
   - Do development inside whatever site repo you're actively working in,
     then push commits out of your site repo up to drupal.org or (whatever
@@ -215,7 +215,7 @@ should be aware of when working with subtrees.
 
 When you (re)build a site codebase with buildmanager-build, Drush
 Subtree only finds version information (release tags) available in your toplevel
-make file (e.g. build.make) or in a make file explicitly incuded in the toplevel
+make file (e.g. build.make) or in a make file explicitly included in the toplevel
 make file. Drush Subtree does NOT automatically manage versions of subtree
 projects discovered by Drush Make at runtime.
 
@@ -244,7 +244,7 @@ to run this command:
 _Issue #2_: If you maintain an install profile and a contrib project required by
 it, a common directory structure is to include the contrib project _inside_ the
 profile for example: docroot/profiles/my-profile/modules/contrib/my-module.
-Subtrees inside subtrees don't work (well, technically they "work", but it's a nasty mess of a sitution
+Subtrees inside subtrees don't work (well, technically they "work", but it's a nasty mess of a situation
 and Drush Subtree does not support it). You have a few alternatives:
 
 A. Rather than include multiple make files in your distro, put everything in
