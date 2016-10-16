@@ -45,7 +45,7 @@ abstract class Commander {
    * Execute command.
    *
    * @return array
-   *   Comand and exec results.
+   *   Command and exec results.
    *   - command (string)
    *   - output (array)
    *   - exit_code (int)
